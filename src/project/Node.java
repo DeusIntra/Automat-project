@@ -38,8 +38,13 @@ public class Node {
         connections.remove(i);
     }
     
-    public Object getConnections() {
-        return connections.toArray();
+    public void disconnectLast() {
+        if (!connections.isEmpty())
+            connections.remove(connections.size()-1);
+    }
+    
+    public Node[] getConnections() {
+        return connections.toArray(new Node[connections.size()]);
     }
     
 }

@@ -7,8 +7,7 @@ import java.util.ArrayList;
 
 public class Visualizer extends JPanel {
     
-    private ArrayList<Node> nodes;  // Расширяемый массив узлов
-    private ArrayList<int[]> connections;
+    private ArrayList<Node> nodes;  // Расширяемый массив узлов    
     private final int node_diam;    // Диаметр узлов
     public final double MIN_DIST;   // Минимальное расстояние между узлами
     private int currentElemIndex;   // Индекс активного элемента
@@ -36,7 +35,7 @@ public class Visualizer extends JPanel {
         if (index != -1) nodes.remove(index);
     }   
     
-    // Двигает узел
+    // Двигает узел (пока зажата кнопка мыши)
     public void moveElem(int x, int y) {
         if (currentElemIndex == -1)
             currentElemIndex = getElemIndexAt(x, y);
@@ -46,19 +45,57 @@ public class Visualizer extends JPanel {
         }
     }
     
-    // Фиксирует узел. Использовать после moveElem,
+    // Фиксирует узел. Использовать после moveElem (когда кнопка мыши отпущена),
     // чтобы выбрать другой узел для перемещения
     public void fixElem(int x, int y) {
         if (currentElemIndex != -1) {
             Node node = nodes.get(currentElemIndex).set(x, y);
             nodes.set(currentElemIndex, node);
+            // Конец работы с активным узлом
             currentElemIndex = -1;
         }
     }
     
+    // В режиме добавления соединения при нажатии кнопки мыши
     public void addArrow(int x, int y) {
         if (currentElemIndex == -1)
             currentElemIndex = getElemIndexAt(x, y);
+        if (currentElemIndex != -1) {
+            Node node = nodes.get(currentElemIndex);
+            // Соединение с "анонимным" узлом, которого не существует
+            node.connectTo(new Node(x, y));
+            nodes.set(currentElemIndex, node);
+        }
+    }
+    
+    // В режиме добавления соединения при перемещении мыши
+    public void moveArrow(int x, int y) {
+        if (currentElemIndex != -1) {
+            Node node = nodes.get(currentElemIndex);
+            // Удаление "анонимного" узла, подключение к другому "анонимному"
+            node.disconnectLast();
+            node.connectTo(new Node(x, y));
+            nodes.set(currentElemIndex, node);
+        }
+    }
+    
+    public void fixArrow(int x, int y) {
+        if (currentElemIndex != -1) {
+            Node node = nodes.get(currentElemIndex);
+            // Удаление "анонимного" узла происходит в любом случае
+            node.disconnectLast();
+            
+            // Если кнопка мыши была отпущена на существующем узле
+            int otherNodeIndex = getElemIndexAt(x, y);
+            if (otherNodeIndex != -1) {
+                //Подключение к существующему узлу
+                Node otherNode = nodes.get(otherNodeIndex);
+                node.connectTo(otherNode);
+                nodes.set(currentElemIndex, node);
+            }
+            // Конец работы с активным узлом
+            currentElemIndex = -1;
+        }
     }
     
     // Возвращает индекс элемента, внутри которого есть точка (x, y)
@@ -97,10 +134,29 @@ public class Visualizer extends JPanel {
         
         // Рисует все узлы
         for(int i = 0; i < nodes.size(); i++) {
-            int x = nodes.get(i).getX() - (node_diam / 2);
-            int y = nodes.get(i).getY() - (node_diam / 2);
             
-            g.drawOval(x, y, node_diam, node_diam); // plus offset
+            Node node  = nodes.get(i);
+            
+            // Центральная точка
+            int x = node.getX();
+            int y = node.getY();
+            
+            // Левый верхний угол квадрата, в который вписан узел
+            int x_top_left = x - (node_diam / 2);
+            int y_top_left = y - (node_diam / 2);
+            
+            // Отрисовка узла
+            g.drawOval(x_top_left, y_top_left, node_diam, node_diam); // plus offset
+            
+            // Отрисовка соединений
+            Node[] conns = node.getConnections();
+            for (Node conn : conns) {
+                int other_x = conn.getX();
+                int other_y = conn.getY();
+                
+                g.drawLine(x, y, other_x, other_y);
+            }
+            
         }
         
     }

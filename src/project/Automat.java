@@ -124,6 +124,7 @@ public class Automat extends JFrame {
                     updateNode(e);
                     break;
                 case 4:
+                    addArrow(e);
                     break;
                 case 7:
                     break;
@@ -139,6 +140,7 @@ public class Automat extends JFrame {
                     updateNode(e);
                     break;
                 case 4:
+                    moveArrow(e);
                     break;
                 case 7:
                     break;
@@ -154,6 +156,7 @@ public class Automat extends JFrame {
                     fixNode(e);
                     break;
                 case 4:
+                    fixArrow(e);
                     break;
                 case 7:
                     break;
@@ -176,8 +179,25 @@ public class Automat extends JFrame {
             vis.repaint();
         }
         
-        private void drawArrow (MouseEvent e) {
-            
+        private void addArrow (MouseEvent e) {
+            int x = e.getX();
+            int y = e.getY();
+            vis.addArrow(x, y);
+            vis.repaint();
+        }
+        
+        private void moveArrow (MouseEvent e) {
+            int x = e.getX();
+            int y = e.getY();
+            vis.moveArrow(x, y);
+            vis.repaint();
+        }
+        
+        private void fixArrow (MouseEvent e) {
+            int x = e.getX();
+            int y = e.getY();
+            vis.fixArrow(x, y);
+            vis.repaint();
         }
     }
     

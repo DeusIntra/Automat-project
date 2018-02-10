@@ -3,6 +3,11 @@ package project;
 import java.awt.Graphics;
 import javax.swing.*;
 import java.util.ArrayList;
+import static java.lang.Math.cos;
+import static java.lang.Math.sin;
+import static java.lang.Math.atan2;
+import static java.lang.Math.ceil;
+import static java.lang.Math.PI;
 
 
 public class Visualizer extends JPanel {
@@ -98,6 +103,14 @@ public class Visualizer extends JPanel {
         }
     }
     
+    public void setEnter(int x, int y) {
+        
+    }
+    
+    public void setExit(int x, int y) {
+        
+    }
+    
     // Возвращает индекс элемента, внутри которого есть точка (x, y)
     private int getElemIndexAt(int x, int y) {
                         
@@ -115,6 +128,8 @@ public class Visualizer extends JPanel {
         return -1;
     }
     
+    // Возвращает true если точка ближе 
+    // чем на минимальном расстоянии от одного из узлов
     private boolean tooClose(int x, int y) {
         for(int i = 0; i < nodes.size(); i++) {
             int node_x = nodes.get(i).getX();
@@ -125,6 +140,17 @@ public class Visualizer extends JPanel {
             if (distance < MIN_DIST) return true;
         }
         return false;
+    }
+    
+    // Рисует стрелочку с началом в точке (x1, y1) и с концом в точке (x2, y2)
+    private void drawArrow(Graphics g, int x1, int y1, int x2, int y2) {
+        double alpha = atan2((x2 - x1), (y2 - y1));
+        int wing_sin = (int)ceil(sin(PI/4 - alpha) * 7);
+        int wing_cos = (int)ceil(cos(PI/4 - alpha) * 7);
+        
+        g.drawLine(x1, y1, x2, y2);
+        g.drawLine(x2, y2, x2+wing_sin, y2-wing_cos);
+        g.drawLine(x2, y2, x2-wing_cos, y2-wing_sin);
     }
     
     @Override
@@ -154,7 +180,17 @@ public class Visualizer extends JPanel {
                 int other_x = conn.getX();
                 int other_y = conn.getY();
                 
-                g.drawLine(x, y, other_x, other_y);
+                // Чтобы линия начиналась не из центра
+                double alpha = atan2((other_x - x), (other_y - y));
+                int dimin_x = (int)ceil(sin(alpha) * node_diam);
+                int dimin_y = (int)ceil(cos(alpha) * node_diam);
+                
+                int x1 = x+dimin_x;
+                int y1 = y+dimin_y;
+                int x2 = other_x-dimin_x;
+                int y2 = other_y-dimin_y;
+                
+                drawArrow(g, x1, y1, x2, y2);
             }
             
         }

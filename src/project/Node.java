@@ -7,13 +7,15 @@ public class Node {
     
     private ArrayList<Node> connections;    
     private int x, y;
-//    private boolean enter;
-//    private boolean exit;
+    public boolean enter;
+    public boolean exit;
     
     public Node(int x, int y) {
         this.x = x;
         this.y = y;
         connections = new ArrayList<>();
+        enter = false;
+        exit = false;
     }
     
     public int getX() {

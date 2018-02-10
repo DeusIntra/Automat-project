@@ -17,7 +17,7 @@ public class Visualizer extends JPanel {
     public final double MIN_DIST;   // Минимальное расстояние между узлами
     private int currentElemIndex;   // Индекс активного элемента
     private int enterIndex;         // Индекс узла, являющегося входом
-//    private int x_offset, y_offset; // Отклонение для перемещения вида
+    private int offset_x, offset_y; // Отклонение для перемещения вида
     
     public Visualizer(int diam) {
         nodes = new ArrayList<>();
@@ -25,6 +25,8 @@ public class Visualizer extends JPanel {
         MIN_DIST = node_diam * 1.5;
         currentElemIndex = -1;
         enterIndex = -1;
+        offset_x = 0;
+        offset_y = 0;        
     }
     
     // Добавляет узел
@@ -33,13 +35,16 @@ public class Visualizer extends JPanel {
         // до другого элемента слишком маленькое
         if (!tooClose(x, y))
             // Добавление узла с центром в точке (x, y)
-            this.nodes.add(new Node(x, y)); // minus offset
+            this.nodes.add(new Node(x-offset_x, y-offset_y));
     }
     
     // Удаляет узел
     public void removeElem(int x, int y) {
         int index = getElemIndexAt(x, y);
-        if (index != -1) nodes.remove(index);
+        if (index != -1) {
+            if (enterIndex == index) enterIndex = -1;
+            nodes.remove(index);
+        }
     }   
     
     // Двигает узел (пока зажата кнопка мыши)
@@ -47,7 +52,8 @@ public class Visualizer extends JPanel {
         if (currentElemIndex == -1)
             currentElemIndex = getElemIndexAt(x, y);
         if (currentElemIndex != -1) {
-            Node node = nodes.get(currentElemIndex).set(x, y);
+            Node node = nodes.get(currentElemIndex);
+            node.set(x - offset_x, y - offset_y);
             nodes.set(currentElemIndex, node);
         }
     }
@@ -56,7 +62,8 @@ public class Visualizer extends JPanel {
     // чтобы выбрать другой узел для перемещения
     public void fixElem(int x, int y) {
         if (currentElemIndex != -1) {
-            Node node = nodes.get(currentElemIndex).set(x, y);
+            Node node = nodes.get(currentElemIndex);
+            node.set(x - offset_x, y - offset_y);
             nodes.set(currentElemIndex, node);
             // Конец работы с активным узлом
             currentElemIndex = -1;
@@ -70,7 +77,7 @@ public class Visualizer extends JPanel {
         if (currentElemIndex != -1) {
             Node node = nodes.get(currentElemIndex);
             // Соединение с "анонимным" узлом, которого не существует
-            node.connectTo(new Node(x, y));
+            node.connectTo(new Node(x - offset_x, y - offset_y));
             nodes.set(currentElemIndex, node);
         }
     }
@@ -81,7 +88,7 @@ public class Visualizer extends JPanel {
             Node node = nodes.get(currentElemIndex);
             // Удаление "анонимного" узла, подключение к другому "анонимному"
             node.disconnectLast();
-            node.connectTo(new Node(x, y));
+            node.connectTo(new Node(x - offset_x, y - offset_y));
             nodes.set(currentElemIndex, node);
         }
     }
@@ -136,6 +143,11 @@ public class Visualizer extends JPanel {
         }
     }
     
+    public void setOffset(int offset_x, int offset_y) {
+        this.offset_x = offset_x;
+        this.offset_y = offset_y;
+    }
+    
     // Возвращает индекс элемента, внутри которого есть точка (x, y)
     private int getElemIndexAt(int x, int y) {
                         
@@ -143,14 +155,18 @@ public class Visualizer extends JPanel {
             
             Node node = nodes.get(i);
             
-            int node_x = node.getX();
-            int node_y = node.getY();
+            int node_x = node.getX() + offset_x;
+            int node_y = node.getY() + offset_y;
             
             double distance = Math.hypot((x - node_x), (y - node_y));
             
             if (distance < node_diam / 2) return i;
         }
         return -1;
+    }
+    
+    public String getOffset() {
+        return "" + offset_x + " " + offset_y;
     }
     
     // Возвращает true если точка ближе 
@@ -200,8 +216,8 @@ public class Visualizer extends JPanel {
             int y = node.getY();
             
             // Левый верхний угол квадрата, в который вписан узел
-            int x_top_left = x - (node_diam / 2);
-            int y_top_left = y - (node_diam / 2);
+            int x_top_left = x - (node_diam / 2) + offset_x;
+            int y_top_left = y - (node_diam / 2) + offset_y;
             
             // Отрисовка узла
             g.drawOval(x_top_left, y_top_left, node_diam, node_diam); // plus offset
@@ -217,17 +233,19 @@ public class Visualizer extends JPanel {
                 int dimin_x = (int)(sin(alpha) * node_diam);
                 int dimin_y = (int)(cos(alpha) * node_diam);
                 
-                int x1 = x+dimin_x;
-                int y1 = y+dimin_y;
-                int x2 = other_x-dimin_x;
-                int y2 = other_y-dimin_y;
+                int x1 = x+dimin_x + offset_x;
+                int y1 = y+dimin_y + offset_y;
+                int x2 = other_x-dimin_x + offset_x;
+                int y2 = other_y-dimin_y + offset_y;
                 
                 drawArrow(g, x1, y1, x2, y2);
             }
             
             // Отрисовка выходов
             if (node.exit)
-                drawArrow(g, x, y-node_diam/2, x, y-node_diam*2);            
+                drawArrow(g, 
+                        x + offset_x, y-node_diam/2 + offset_y, 
+                        x + offset_x, y-node_diam*2 + offset_y);            
         }
         
         // Отрисовка входа
@@ -236,7 +254,9 @@ public class Visualizer extends JPanel {
             int x = node.getX();
             int y = node.getY();
             
-            drawArrow(g, x-node_diam*2, y, x-node_diam/2, y);
-        }        
+            drawArrow(g, 
+                    x-node_diam*2 + offset_x, y + offset_y, 
+                    x-node_diam/2 + offset_x, y + offset_y);
+        }     
     }
 }

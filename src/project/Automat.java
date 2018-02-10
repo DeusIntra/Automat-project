@@ -19,7 +19,8 @@ public class Automat extends JFrame {
     private final JButton connectModeBtn;
     private final JButton enterModeBtn;
     private final JButton exitModeBtn;
-//    private final JButton offsetModeBtn;
+    private final JButton offsetModeBtn;
+    private final JLabel offsetLabel;
     
     /*
     0 - Ничего
@@ -93,9 +94,21 @@ public class Automat extends JFrame {
         exitModeBtn.setBounds(350, 340, 100, 30);
         exitModeBtn.addActionListener((ActionEvent e) -> {mode = 6;});
         add(exitModeBtn);
+        
+        // Настройка кнопки режима соединения узлов
+        offsetModeBtn = new JButton("Offset");
+        offsetModeBtn.setBounds(350, 380, 100, 30);
+        offsetModeBtn.addActionListener((ActionEvent e) -> {mode = 7;});
+        add(offsetModeBtn);
+        
+        offsetLabel = new JLabel("Offset: 0 0");
+        offsetLabel.setBounds(20, 350, 200, 20);
+        add(offsetLabel);
     }
     
     private class VisMouseListener extends MouseInputAdapter {
+        
+        private int old_x, old_y, old_offset_x=0, old_offset_y=0;
         
         @Override
         public void mouseClicked(MouseEvent e) {
@@ -119,6 +132,10 @@ public class Automat extends JFrame {
                     
                 case 3: // Перемещение узла
                     updateNode(e);      
+                    break;
+                    
+                case 4: // Добавление петли
+                    // код код код
                     break;
                     
                 case 5: // Установка входа
@@ -147,6 +164,7 @@ public class Automat extends JFrame {
                     addArrow(e);
                     break;
                 case 7:
+                    getOldCoords(e);
                     break;
                 default:
                     break;
@@ -163,6 +181,7 @@ public class Automat extends JFrame {
                     moveArrow(e);
                     break;
                 case 7:
+                    setOffset(e);
                     break;
                 default:
                     break;
@@ -179,6 +198,8 @@ public class Automat extends JFrame {
                     fixArrow(e);
                     break;
                 case 7:
+                    setOffset(e);
+                    saveOffset(e);
                     break;
                 default:
                     break;
@@ -234,6 +255,30 @@ public class Automat extends JFrame {
             
             vis.setExit(x, y);
             vis.repaint();
+        }
+        
+        private void getOldCoords(MouseEvent e) {
+            old_x = e.getX();
+            old_y = e.getY();
+        }
+        
+        private void setOffset(MouseEvent e) {
+            int new_x = e.getX();
+            int new_y = e.getY();
+            
+            int offset_x = new_x - old_x + old_offset_x;
+            int offset_y = new_y - old_y + old_offset_y;
+            vis.setOffset(offset_x, offset_y);
+            vis.repaint();
+            offsetLabel.setText("Offset: " + vis.getOffset());
+        }
+        
+        private void saveOffset(MouseEvent e) {
+            int new_x = e.getX();
+            int new_y = e.getY();
+            
+            old_offset_x += new_x - old_x;
+            old_offset_y += new_y - old_y;
         }
     }
     

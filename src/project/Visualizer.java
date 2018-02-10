@@ -16,6 +16,7 @@ public class Visualizer extends JPanel {
     private final int node_diam;    // Диаметр узлов
     public final double MIN_DIST;   // Минимальное расстояние между узлами
     private int currentElemIndex;   // Индекс активного элемента
+    private int enterIndex;         // Индекс узла, являющегося входом
 //    private int x_offset, y_offset; // Отклонение для перемещения вида
     
     public Visualizer(int diam) {
@@ -23,6 +24,7 @@ public class Visualizer extends JPanel {
         node_diam = diam;
         MIN_DIST = node_diam * 1.5;
         currentElemIndex = -1;
+        enterIndex = -1;
     }
     
     // Добавляет узел
@@ -84,6 +86,7 @@ public class Visualizer extends JPanel {
         }
     }
     
+    // В режиме добавления соединения при отпускании мыши
     public void fixArrow(int x, int y) {
         if (currentElemIndex != -1) {
             Node node = nodes.get(currentElemIndex);
@@ -103,12 +106,34 @@ public class Visualizer extends JPanel {
         }
     }
     
+    // Устанавливает вход в одном из узлов
     public void setEnter(int x, int y) {
-        
+        int index = getElemIndexAt(x, y);
+        if (index != -1) {
+            Node node;
+            // Вход может быть только один, поэтому
+            // если вход уже существует, убрать вход
+            if (enterIndex != -1) {
+                node = nodes.get(enterIndex);
+                node.enter = false;
+                nodes.set(enterIndex, node);
+            }
+            // Установить новый вход
+            node = nodes.get(index);
+            node.enter = true;
+            nodes.set(index, node);
+            enterIndex = index;
+        }
     }
     
+    // Устанавливает/убирает выход в выбранном узле
     public void setExit(int x, int y) {
-        
+        int index = getElemIndexAt(x, y);
+        if (index != -1) {
+            Node node = nodes.get(index);
+            node.exit = !node.exit;
+            nodes.set(index, node);
+        }
     }
     
     // Возвращает индекс элемента, внутри которого есть точка (x, y)
@@ -145,12 +170,18 @@ public class Visualizer extends JPanel {
     // Рисует стрелочку с началом в точке (x1, y1) и с концом в точке (x2, y2)
     private void drawArrow(Graphics g, int x1, int y1, int x2, int y2) {
         double alpha = atan2((x2 - x1), (y2 - y1));
-        int wing_sin = (int)ceil(sin(PI/4 - alpha) * 7);
-        int wing_cos = (int)ceil(cos(PI/4 - alpha) * 7);
+        int left_wing_sin = (int)ceil(sin(PI/6 - alpha) * 7);
+        int left_wing_cos = (int)ceil(cos(PI/6 - alpha) * 7);
         
+        int right_wing_sin = (int)ceil(sin(PI/6 + alpha) * 7);
+        int right_wing_cos = (int)ceil(cos(PI/6 + alpha) * 7);
+        
+        // Основание стрелки
         g.drawLine(x1, y1, x2, y2);
-        g.drawLine(x2, y2, x2+wing_sin, y2-wing_cos);
-        g.drawLine(x2, y2, x2-wing_cos, y2-wing_sin);
+        // Левое крыло
+        g.drawLine(x2, y2, x2+left_wing_sin, y2-left_wing_cos);
+        // Правое крыло
+        g.drawLine(x2, y2, x2-right_wing_sin, y2-right_wing_cos);
     }
     
     @Override
@@ -159,9 +190,10 @@ public class Visualizer extends JPanel {
         super.paintComponent(g); // Рисует панель
         
         // Рисует все узлы
+        Node node;
         for(int i = 0; i < nodes.size(); i++) {
             
-            Node node  = nodes.get(i);
+            node = nodes.get(i);
             
             // Центральная точка
             int x = node.getX();
@@ -182,8 +214,8 @@ public class Visualizer extends JPanel {
                 
                 // Чтобы линия начиналась не из центра
                 double alpha = atan2((other_x - x), (other_y - y));
-                int dimin_x = (int)ceil(sin(alpha) * node_diam);
-                int dimin_y = (int)ceil(cos(alpha) * node_diam);
+                int dimin_x = (int)(sin(alpha) * node_diam);
+                int dimin_y = (int)(cos(alpha) * node_diam);
                 
                 int x1 = x+dimin_x;
                 int y1 = y+dimin_y;
@@ -193,7 +225,18 @@ public class Visualizer extends JPanel {
                 drawArrow(g, x1, y1, x2, y2);
             }
             
+            // Отрисовка выходов
+            if (node.exit)
+                drawArrow(g, x, y-node_diam/2, x, y-node_diam*2);            
         }
         
+        // Отрисовка входа
+        if (enterIndex != -1) {
+            node = nodes.get(enterIndex);
+            int x = node.getX();
+            int y = node.getY();
+            
+            drawArrow(g, x-node_diam*2, y, x-node_diam/2, y);
+        }        
     }
 }

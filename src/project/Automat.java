@@ -17,8 +17,8 @@ public class Automat extends JFrame {
     private final JButton removeModeBtn;
     private final JButton dragModeBtn;
     private final JButton connectModeBtn;
-//    private final JButton enterModeBtn;
-//    private final JButton exitModeBtn;
+    private final JButton enterModeBtn;
+    private final JButton exitModeBtn;
 //    private final JButton offsetModeBtn;
     
     /*
@@ -28,7 +28,7 @@ public class Automat extends JFrame {
     3 - Перемещение узла
     4 - Добавление / удаление перехода
     5 - Выбрать входной узел
-    6 - Флаг распознавания
+    6 - Флаг распознавания (выход)
     7 - Перемещение по полю
     */
     private byte mode;
@@ -81,6 +81,18 @@ public class Automat extends JFrame {
         connectModeBtn.setBounds(350, 260, 100, 30);
         connectModeBtn.addActionListener((ActionEvent e) -> {mode = 4;});
         add(connectModeBtn);
+        
+        // Настройка кнопки режима соединения узлов
+        enterModeBtn = new JButton("Set enter");
+        enterModeBtn.setBounds(350, 300, 100, 30);
+        enterModeBtn.addActionListener((ActionEvent e) -> {mode = 5;});
+        add(enterModeBtn);
+        
+        // Настройка кнопки режима соединения узлов
+        exitModeBtn = new JButton("Toggle exit");
+        exitModeBtn.setBounds(350, 340, 100, 30);
+        exitModeBtn.addActionListener((ActionEvent e) -> {mode = 6;});
+        add(exitModeBtn);
     }
     
     private class VisMouseListener extends MouseInputAdapter {
@@ -108,6 +120,14 @@ public class Automat extends JFrame {
                 case 3: // Перемещение узла
                     updateNode(e);      
                     break;
+                    
+                case 5: // Установка входа
+                    setEnter(e);
+                    break;
+                    
+                case 6: // Установка выхода
+                    setExit(e);
+                    break;
                 default:
                     break;
             }
@@ -120,10 +140,10 @@ public class Automat extends JFrame {
             if(e.getButton() != 1) return;
             
             switch(mode) {
-                case 3:
+                case 3: // Перемещение узла
                     updateNode(e);
                     break;
-                case 4:
+                case 4: // Добавление перехода
                     addArrow(e);
                     break;
                 case 7:
@@ -139,7 +159,7 @@ public class Automat extends JFrame {
                 case 3:
                     updateNode(e);
                     break;
-                case 4:
+                case 4: // Добавление перехода
                     moveArrow(e);
                     break;
                 case 7:
@@ -152,10 +172,10 @@ public class Automat extends JFrame {
         @Override
         public void mouseReleased(MouseEvent e) {
             switch(mode) {
-                case 3:
+                case 3: // Установка перемещаемого узла в выбранном положении
                     fixNode(e);
                     break;
-                case 4:
+                case 4: // Установка перехода
                     fixArrow(e);
                     break;
                 case 7:
@@ -197,6 +217,22 @@ public class Automat extends JFrame {
             int x = e.getX();
             int y = e.getY();
             vis.fixArrow(x, y);
+            vis.repaint();
+        }
+        
+        private void setEnter(MouseEvent e) {
+            int x = e.getX();
+            int y = e.getY();
+            
+            vis.setEnter(x, y);
+            vis.repaint();
+        }
+        
+        private void setExit(MouseEvent e) {
+            int x = e.getX();
+            int y = e.getY();
+            
+            vis.setExit(x, y);
             vis.repaint();
         }
     }

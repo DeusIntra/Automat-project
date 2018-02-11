@@ -28,4 +28,5 @@ public class Connection {
     public String getWeight() {
         return weight;
     }
+    
 }

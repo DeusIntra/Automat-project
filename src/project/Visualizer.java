@@ -120,7 +120,15 @@ public class Visualizer extends JPanel {
             if (other_node_index != -1 && other_node_index != current_elem_index) {
                 Node node = nodes.get(current_elem_index);
                 Node other_node = nodes.get(other_node_index);
-                //Подключение к существующему узлу
+                
+                // Проверка на существование второго такого же соединения
+                for (int i = connections.size()-1; i >= 0; i--) {
+                    Connection conn = connections.get(i);
+                    if (conn.getFrom() == node && conn.getWeight().equals(letter))
+                        connections.remove(i);                    
+                }                        
+                
+                // Подключение к существующему узлу
                 Connection conn = new Connection(node, other_node, letter);
                 connections.add(conn);
             }

@@ -100,14 +100,14 @@ public class Visualizer extends JPanel {
         if (current_elem_index == -1)
             current_elem_index = getElemIndexAt(x, y);
         if (current_elem_index != -1 && letter.length() != 0) {
-            current_arrow = new Point(x + offset_x, y + offset_y);
+            current_arrow = new Point(x - offset_x, y - offset_y);
         }
     }
     
     // В режиме добавления соединения при перемещении мыши
     public void moveArrow(int x, int y) {
         if (current_arrow != null) {
-            current_arrow = new Point(x + offset_x, y + offset_y);
+            current_arrow = new Point(x - offset_x, y - offset_y);
         }
     }
     

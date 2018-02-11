@@ -38,11 +38,36 @@ public class Visualizer extends JPanel {
             this.nodes.add(new Node(x-offset_x, y-offset_y));
     }
     
-    // Удаляет узел
+    // Удаляет узел и соединения других узлов с ним
     public void removeElem(int x, int y) {
         int index = getElemIndexAt(x, y);
         if (index != -1) {
+            // Убрать входной узел, если есть
             if (enterIndex == index) enterIndex = -1;
+            
+            // Убрать соединения других элементов с данным
+            Node other_node;
+            Node[] other_conns;
+            // Проверка каждого элемента
+            for(int i = 0; i < nodes.size(); i++) {
+                other_node = nodes.get(i);
+                other_conns = other_node.getConnections();
+                
+                // Проверка каждого соединения
+                for (int j = 0; j < other_conns.length; j++) {
+                    int check_x = other_conns[j].getX();
+                    int check_y = other_conns[j].getY();
+                    int check_index = getElemIndexAt(check_x, check_y);
+                    
+                    // Если проверяемый элемент совпадает с удаляемым
+                    if (check_index == index) {
+                        other_node.disconnectFrom(j);
+                        nodes.set(i, other_node);
+                    }
+                }
+            }
+            
+            // Убрать сам узел
             nodes.remove(index);
         }
     }   

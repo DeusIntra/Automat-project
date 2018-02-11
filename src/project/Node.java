@@ -7,6 +7,7 @@ public class Node {
     
     private ArrayList<Node> connections;    
     private int x, y;
+    private String connecting_letter;
     public boolean enter;
     public boolean exit;
     
@@ -16,6 +17,7 @@ public class Node {
         connections = new ArrayList<>();
         enter = false;
         exit = false;
+        connecting_letter = "";
     }
     
     public int getX() {

@@ -14,8 +14,8 @@ import java.util.regex.Pattern;
 
 public class Visualizer extends JPanel {
     
-    private ArrayList<Node> nodes;              // Расширяемый массив узлов
-    private ArrayList<Connection> connections;  // Массив переходов
+    private final ArrayList<Node> nodes;        // Расширяемый массив узлов
+    private final ArrayList<Connection> connections;  // Массив переходов
     private int node_diam;                      // Диаметр узлов
     public double min_dist;                     // Минимальное расстояние между узлами
     private int current_elem_index;             // Индекс активного элемента

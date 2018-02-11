@@ -21,6 +21,8 @@ public class Automat extends JFrame {
     private final JButton exitModeBtn;
     private final JButton offsetModeBtn;
     private final JLabel offsetLabel;
+    private final JTextField letterSetter;
+    private final JTextArea connectionsTA;
     
     /*
     0 - Ничего
@@ -43,6 +45,11 @@ public class Automat extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(frameWidth, frameHeight);
         setLayout(null);
+        
+                
+        connectionsTA = new JTextArea();
+        connectionsTA.setBounds(480, 100, 300, 300);
+        add(connectionsTA);
         
         // Настройка панели
         vis = new Visualizer(10);
@@ -101,9 +108,15 @@ public class Automat extends JFrame {
         offsetModeBtn.addActionListener((ActionEvent e) -> {mode = 7;});
         add(offsetModeBtn);
         
+        // Надпись, показывающая смещение
         offsetLabel = new JLabel("Offset: 0 0");
         offsetLabel.setBounds(20, 350, 200, 20);
         add(offsetLabel);
+        
+        letterSetter = new JTextField();
+        letterSetter.setBounds(350, 30, 200, 20);
+        add(letterSetter);
+
     }
     
     private class VisMouseListener extends MouseInputAdapter {
@@ -112,7 +125,6 @@ public class Automat extends JFrame {
         
         @Override
         public void mouseClicked(MouseEvent e) {
-            
             // Принимает только клик левой кнопки мыши
             if(e.getButton() != 1) return;
             
@@ -123,15 +135,18 @@ public class Automat extends JFrame {
                 case 1: // Добавление узла
                     vis.addElem(x, y);
                     vis.repaint();
+                    connectionsTA.setText(vis.getConns());
                     break;
                     
                 case 2: // Удаление узла
                     vis.removeElem(x, y);
                     vis.repaint();
+                    connectionsTA.setText(vis.getConns());
                     break;
                     
                 case 3: // Перемещение узла
-                    updateNode(e);      
+                    updateNode(e);   
+                    connectionsTA.setText(vis.getConns());
                     break;
                     
                 case 4: // Добавление петли
@@ -159,9 +174,11 @@ public class Automat extends JFrame {
             switch(mode) {
                 case 3: // Перемещение узла
                     updateNode(e);
+                    connectionsTA.setText(vis.getConns());
                     break;
                 case 4: // Добавление перехода
                     addArrow(e);
+                    connectionsTA.setText(vis.getConns());
                     break;
                 case 7:
                     getOldCoords(e);
@@ -173,15 +190,19 @@ public class Automat extends JFrame {
         
         @Override
         public void mouseDragged(MouseEvent e) {
+
             switch(mode) {
                 case 3:
                     updateNode(e);
+                    connectionsTA.setText(vis.getConns());
                     break;
                 case 4: // Добавление перехода
                     moveArrow(e);
+                    connectionsTA.setText(vis.getConns());
                     break;
                 case 7:
                     setOffset(e);
+                    connectionsTA.setText(vis.getConns());
                     break;
                 default:
                     break;
@@ -190,12 +211,15 @@ public class Automat extends JFrame {
         
         @Override
         public void mouseReleased(MouseEvent e) {
+            
             switch(mode) {
                 case 3: // Установка перемещаемого узла в выбранном положении
                     fixNode(e);
+                    connectionsTA.setText(vis.getConns());
                     break;
                 case 4: // Установка перехода
                     fixArrow(e);
+                    connectionsTA.setText(vis.getConns());
                     break;
                 case 7:
                     setOffset(e);
@@ -223,6 +247,7 @@ public class Automat extends JFrame {
         private void addArrow (MouseEvent e) {
             int x = e.getX();
             int y = e.getY();
+            vis.setLetter(letterSetter.getText());
             vis.addArrow(x, y);
             vis.repaint();
         }

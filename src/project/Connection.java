@@ -3,14 +3,16 @@ package project;
 
 public class Connection {
     
-    private Node from;
-    private Node to;
+    private final Node from;
+    private final Node to;
     private String weight;
+    public boolean has_reverse;
     
     public Connection(Node from, Node to, String weight) {
         this.from = from;
         this.to = to;
         this.weight = weight;
+        has_reverse = false;
     }
     
     public Connection(Node from, Node to) {

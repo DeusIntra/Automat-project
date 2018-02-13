@@ -123,15 +123,34 @@ public class Visualizer extends JPanel {
                 Node node = nodes.get(current_elem_index);
                 Node other_node = nodes.get(other_node_index);
                 
-                // Проверка на существование второго такого же соединения
+                // Проверка на существование второго такого же перехода к другому узлу,
+                // проверка на существование обратного перехода
+                boolean has_reverse = false;
                 for (int i = connections.size()-1; i >= 0; i--) {
                     Connection conn = connections.get(i);
-                    if (conn.getFrom() == node && conn.getWeight().equals(letter))
-                        connections.remove(i);                    
-                }                        
+                    Node from = conn.getFrom();
+                    Node to = conn.getTo();
+                    if (from == node && conn.getWeight().equals(letter)) {
+                        if (conn.has_reverse) {
+                            for (Connection rev : connections) {
+                                if (rev.has_reverse)
+                                    // Работает - не трогай
+                                    // Это эффективно, честно
+                                    if (rev.getFrom() == to && rev.getTo() == from)
+                                        rev.has_reverse = false;
+                            }
+                        }
+                        connections.remove(i);
+                    }
+                    if (node == to && other_node == from) {
+                        has_reverse = true;
+                        conn.has_reverse = true;
+                    }
+                }
                 
                 // Подключение к существующему узлу
                 Connection conn = new Connection(node, other_node, letter);
+                conn.has_reverse = has_reverse;
                 connections.add(conn);
             }
             // Конец работы с активным узлом
@@ -345,21 +364,14 @@ public class Visualizer extends JPanel {
             int to_x = to.getX();
             int to_y = to.getY();
             
-            boolean has_reverse = false;
-            for (Connection reverse : connections) {
-                if (from.equals(reverse.getTo()) && to.equals(reverse.getFrom())) {
-                    has_reverse = true;
-                    break;
-                }
-            }
-            
             // Если есть обратный переход
-            if(has_reverse) {
-                // Координаты со смещением
+            if(conn.has_reverse) {
+
                 int x1 = from_x + offset_x;
                 int y1 = from_y + offset_y;
                 int x2 = to_x + offset_x;
                 int y2 = to_y + offset_y;
+                
                 // Отрисовка кривой со стрелкой
                 drawArcArrow(g, x1, y1, x2, y2);
                 
@@ -369,10 +381,12 @@ public class Visualizer extends JPanel {
                 int y1_w = (int)(y1 - cos(alpha) * node_diam*2);
                 int x2_w = (int)(x2 + sin(alpha) * node_diam*2);
                 int y2_w = (int)(y2 - cos(alpha) * node_diam*2);
+                
                 // Отрисовка подписи
                 drawConnLetter(weight, g, x1_w, y1_w, x2_w, y2_w);
             }
             else {
+                
                 // Чтобы линия начиналась не из центра
                 double alpha = atan2((to_x - from_x), (to_y - from_y));
                 int dimin_x = (int)(sin(alpha) * node_diam);
@@ -382,6 +396,7 @@ public class Visualizer extends JPanel {
                 int y1 = from_y + dimin_y + offset_y;
                 int x2 = to_x - dimin_x + offset_x;
                 int y2 = to_y - dimin_y + offset_y;
+                
                 // Стрелка
                 drawArrow(g, x1, y1, x2, y2);
                 // Подпись к стрелке
@@ -408,7 +423,9 @@ public class Visualizer extends JPanel {
             int x2 = to_x - dimin_x + offset_x;
             int y2 = to_y - dimin_y + offset_y;
             
-            drawArrow(g, x1, y1, x2, y2);            
+            // Отрисовка активной стрелки
+            drawArrow(g, x1, y1, x2, y2);
+            // Подпись к активной стрелке
             drawConnLetter(letter, g, x1, y1, x2, y2);
         }
     }

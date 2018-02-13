@@ -22,7 +22,7 @@ public class Automat extends JFrame {
     private final JButton offsetModeBtn;
     private final JLabel offsetLabel;
     private final JTextField letterSetter;
-    private final JTextArea connectionsTA;
+//    private final JTextArea connectionsTA;
     
     /*
     0 - Ничего
@@ -47,9 +47,9 @@ public class Automat extends JFrame {
         setLayout(null);
         
                 
-        connectionsTA = new JTextArea();
-        connectionsTA.setBounds(480, 100, 300, 300);
-        add(connectionsTA);
+//        connectionsTA = new JTextArea();
+//        connectionsTA.setBounds(480, 100, 300, 300);
+//        add(connectionsTA);
         
         // Настройка панели
         vis = new Visualizer(10);
@@ -115,6 +115,7 @@ public class Automat extends JFrame {
         
         letterSetter = new JTextField();
         letterSetter.setBounds(350, 30, 200, 20);
+        letterSetter.setText("a");
         add(letterSetter);
 
     }
@@ -135,18 +136,18 @@ public class Automat extends JFrame {
                 case 1: // Добавление узла
                     vis.addElem(x, y);
                     vis.repaint();
-                    connectionsTA.setText(vis.getConns());
+//                    connectionsTA.setText(vis.getConns());
                     break;
                     
                 case 2: // Удаление узла
                     vis.removeElem(x, y);
                     vis.repaint();
-                    connectionsTA.setText(vis.getConns());
+//                    connectionsTA.setText(vis.getConns());
                     break;
                     
                 case 3: // Перемещение узла
                     updateNode(e);   
-                    connectionsTA.setText(vis.getConns());
+//                    connectionsTA.setText(vis.getConns());
                     break;
                     
                 case 4: // Добавление петли
@@ -174,11 +175,11 @@ public class Automat extends JFrame {
             switch(mode) {
                 case 3: // Перемещение узла
                     updateNode(e);
-                    connectionsTA.setText(vis.getConns());
+//                    connectionsTA.setText(vis.getConns());
                     break;
                 case 4: // Добавление перехода
                     addArrow(e);
-                    connectionsTA.setText(vis.getConns());
+//                    connectionsTA.setText(vis.getConns());
                     break;
                 case 7:
                     getOldCoords(e);
@@ -194,15 +195,15 @@ public class Automat extends JFrame {
             switch(mode) {
                 case 3:
                     updateNode(e);
-                    connectionsTA.setText(vis.getConns());
+//                    connectionsTA.setText(vis.getConns());
                     break;
                 case 4: // Добавление перехода
                     moveArrow(e);
-                    connectionsTA.setText(vis.getConns());
+//                    connectionsTA.setText(vis.getConns());
                     break;
                 case 7:
                     setOffset(e);
-                    connectionsTA.setText(vis.getConns());
+//                    connectionsTA.setText(vis.getConns());
                     break;
                 default:
                     break;
@@ -215,11 +216,11 @@ public class Automat extends JFrame {
             switch(mode) {
                 case 3: // Установка перемещаемого узла в выбранном положении
                     fixNode(e);
-                    connectionsTA.setText(vis.getConns());
+//                    connectionsTA.setText(vis.getConns());
                     break;
                 case 4: // Установка перехода
                     fixArrow(e);
-                    connectionsTA.setText(vis.getConns());
+//                    connectionsTA.setText(vis.getConns());
                     break;
                 case 7:
                     setOffset(e);

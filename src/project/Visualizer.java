@@ -1,6 +1,7 @@
 package project;
 
 import java.awt.*;
+import java.awt.geom.AffineTransform;
 import javax.swing.*;
 import java.util.ArrayList;
 import static java.lang.Math.cos;
@@ -8,8 +9,9 @@ import static java.lang.Math.sin;
 import static java.lang.Math.atan2;
 import static java.lang.Math.ceil;
 import static java.lang.Math.PI;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import static java.lang.Math.atan;
+import static java.lang.Math.hypot;
+import static java.lang.Math.pow;
 
 
 public class Visualizer extends JPanel {
@@ -183,23 +185,6 @@ public class Visualizer extends JPanel {
         return offset_x + " " + offset_y;
     }
     
-    public String getConns() {
-        String str = "";
-        
-        for (Connection conn : connections) {
-            Node from = conn.getFrom();
-            Node to = conn.getTo();
-            Pattern p = Pattern.compile("@(.*)");  
-            Matcher m1 = p.matcher(from.toString());
-            Matcher m2 = p.matcher(to.toString());
-            m1.find();
-            m2.find();
-            str += m1.group(1) + " -> " + m2.group(1) + "\n";
-        }
-        
-        return str;
-    }
-    
     // Возвращает индекс элемента, внутри которого есть точка (x, y)
     private int getElemIndexAt(int x, int y) {
                         
@@ -210,7 +195,7 @@ public class Visualizer extends JPanel {
             int node_x = node.getX() + offset_x;
             int node_y = node.getY() + offset_y;
             
-            double distance = Math.hypot((x - node_x), (y - node_y));
+            double distance = hypot((x - node_x), (y - node_y));
             
             if (distance < node_diam / 2) return i;
         }
@@ -224,7 +209,7 @@ public class Visualizer extends JPanel {
             int node_x = nodes.get(i).getX();
             int node_y = nodes.get(i).getY();
             
-            double distance = Math.hypot((x - node_x), (y - node_y));
+            double distance = hypot((x - node_x), (y - node_y));
             
             if (distance < min_dist) return true;
         }
@@ -246,6 +231,44 @@ public class Visualizer extends JPanel {
         g.drawLine(x2, y2, x2+left_wing_sin, y2-left_wing_cos);
         // Правое крыло
         g.drawLine(x2, y2, x2-right_wing_sin, y2-right_wing_cos);
+    }
+    
+    // Рисует дугу со стрелкой. Здесь я умер.
+    private void drawArcArrow(Graphics g, int x1, int y1, int x2, int y2) {
+        
+        // Угол между двумя точками - это угол, на который нужно повернуть кривую
+        double alpha = atan2((x2 - x1), (y2 - y1));
+        // Кривая представляет собой дугу на эллипсе.
+        // Ширина эллипса - его большая полуось * 2, высота - малая полуось * 2
+        int arc_width = (int)hypot((x2 - x1), (y2 - y1));
+        int arc_height = node_diam*4;
+        
+        // Центральная точка эллипса, на котором рисуется дуга
+        int oval_mid_x = x1 + arc_width / 2;
+        int oval_mid_y = y1;
+        
+        // Точка, через которую проходит касательная
+        int tan_x = (int) (oval_mid_x + cos(PI/6) * arc_width/2);
+        int tan_y = (int) (oval_mid_y - sin(PI/6) * arc_height/2);
+        
+        // Найти угол касательной
+        double k = -(pow(arc_height, 2) / pow(arc_width, 2)) * (tan_x/tan_y);
+        double ang = atan(k);
+        
+        // Необходимо использовать Graphics2D, чтобы повернуть дугу
+        Graphics2D g2d = (Graphics2D) g;
+        // Изначальное состояние, к которому необходимо будет вернуться после поворота
+        AffineTransform reset = g2d.getTransform();
+        // Поворот на нужный угол вокруг точки (x1, y1)
+        g2d.rotate(-alpha+PI/2, x1, y1);
+        // Сама дуга
+        g2d.drawArc(x1, y1-arc_height/2, arc_width, arc_height, 30, 120);
+        // "Крылья" стрелки, лежащей на касательной
+        g2d.drawLine(tan_x, tan_y, (int) (tan_x-cos(ang + PI/6)*7), (int) (tan_y+sin(ang + PI/6)*7));
+        g2d.drawLine(tan_x, tan_y, (int) (tan_x-cos(ang - PI/3)*7), (int) (tan_y+sin(ang - PI/3)*7));
+        // Изначальное состояние (до поворота)
+        g2d.setTransform(reset);
+        
     }
     
     // Рисует строку перехода на середине стрелки внутри прямоугольника
@@ -293,14 +316,6 @@ public class Visualizer extends JPanel {
             // Отрисовка узла
             g.drawOval(x_top_left, y_top_left, node_diam, node_diam);
             
-            // Отрисовка имени
-            Pattern p = Pattern.compile(".*@(.*)$");  
-            Matcher m = p.matcher(node.toString());
-            m.find();
-            g.setColor(Color.RED);
-            g.drawString(m.group(1), x_top_left, y_top_left);
-            g.setColor(Color.BLACK);
-            
             // Отрисовка выходов
             if (node.exit)
                 drawArrow(g, 
@@ -330,18 +345,43 @@ public class Visualizer extends JPanel {
             int to_x = to.getX();
             int to_y = to.getY();
             
-            // Чтобы линия начиналась не из центра
-            double alpha = atan2((to_x - from_x), (to_y - from_y));
-            int dimin_x = (int)(sin(alpha) * node_diam);
-            int dimin_y = (int)(cos(alpha) * node_diam);
+            boolean has_reverse = false;
+            for (Connection reverse : connections) {
+                if (from.equals(reverse.getTo()) && to.equals(reverse.getFrom())) {
+                    has_reverse = true;
+                    break;
+                }
+            }
             
-            int x1 = from_x + dimin_x + offset_x;
-            int y1 = from_y + dimin_y + offset_y;
-            int x2 = to_x - dimin_x + offset_x;
-            int y2 = to_y - dimin_y + offset_y;
-            
-            drawArrow(g, x1, y1, x2, y2);            
-            drawConnLetter(weight, g, x1, y1, x2, y2);
+            if(has_reverse) {
+                int x1 = from_x + offset_x;
+                int y1 = from_y + offset_y;
+                int x2 = to_x + offset_x;
+                int y2 = to_y + offset_y;
+                drawArcArrow(g, x1, y1, x2, y2);
+                
+                // Подпись к кривой
+                double alpha = atan2((to_y - from_y), (to_x - from_x));
+                int x1_w = (int)(from_x + sin(alpha) * node_diam*2) + offset_x;
+                int y1_w = (int)(from_y - cos(alpha) * node_diam*2) + offset_y;
+                int x2_w = (int)(to_x + sin(alpha) * node_diam*2) + offset_x;
+                int y2_w = (int)(to_y - cos(alpha) * node_diam*2) + offset_y;
+                drawConnLetter(weight, g, x1_w, y1_w, x2_w, y2_w);
+            }
+            else {
+                // Чтобы линия начиналась не из центра
+                double alpha = atan2((to_x - from_x), (to_y - from_y));
+                int dimin_x = (int)(sin(alpha) * node_diam);
+                int dimin_y = (int)(cos(alpha) * node_diam);
+
+                int x1 = from_x + dimin_x + offset_x;
+                int y1 = from_y + dimin_y + offset_y;
+                int x2 = to_x - dimin_x + offset_x;
+                int y2 = to_y - dimin_y + offset_y;
+
+                drawArrow(g, x1, y1, x2, y2);            
+                drawConnLetter(weight, g, x1, y1, x2, y2);
+            }
         }
         
         // Отрисовка активного перехода

@@ -13,6 +13,12 @@ public class Connection {
         this.weight = weight;
     }
     
+    public Connection(Node from, Node to) {
+        this.from = from;
+        this.to = to;
+        this.weight = "";
+    }
+    
     public void setWeight(String weight) {
         this.weight = weight;
     }

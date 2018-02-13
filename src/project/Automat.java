@@ -17,6 +17,8 @@ public class Automat extends JFrame {
     private final JButton removeModeBtn;
     private final JButton dragModeBtn;
     private final JButton connectModeBtn;
+    private final JButton addLoopModeBtn;
+    private final JButton disconnectModeBtn;
     private final JButton enterModeBtn;
     private final JButton exitModeBtn;
     private final JButton offsetModeBtn;
@@ -29,10 +31,12 @@ public class Automat extends JFrame {
     1 - Добавление узла
     2 - Удаление узла
     3 - Перемещение узла
-    4 - Добавление / удаление перехода
-    5 - Выбрать входной узел
-    6 - Флаг распознавания (выход)
-    7 - Перемещение по полю
+    4 - Добавление перехода
+    5 - Добавление петли
+    6 - Удаление перехода
+    7 - Выбрать входной узел
+    8 - Флаг распознавания (выход)
+    9 - Перемещение по полю
     */
     private byte mode;
     
@@ -45,7 +49,6 @@ public class Automat extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(frameWidth, frameHeight);
         setLayout(null);
-        
                 
 //        connectionsTA = new JTextArea();
 //        connectionsTA.setBounds(480, 100, 300, 300);
@@ -90,22 +93,34 @@ public class Automat extends JFrame {
         connectModeBtn.addActionListener((ActionEvent e) -> {mode = 4;});
         add(connectModeBtn);
         
-        // Настройка кнопки режима соединения узлов
+        // Настройка кнопки режима добавления петли
+        addLoopModeBtn = new JButton("Add loop");
+        addLoopModeBtn.setBounds(350, 300, 100, 30);
+        addLoopModeBtn.addActionListener((ActionEvent e) -> {mode = 5;});
+        add(addLoopModeBtn);
+                
+        // Настройка кнопки режима удаления соединения
+        disconnectModeBtn = new JButton("Disconnect");
+        disconnectModeBtn.setBounds(350, 340, 100, 30);
+        disconnectModeBtn.addActionListener((ActionEvent e) -> {mode = 6;});
+        add(disconnectModeBtn);
+        
+        // Настройка кнопки режима выбора входа
         enterModeBtn = new JButton("Set enter");
-        enterModeBtn.setBounds(350, 300, 100, 30);
-        enterModeBtn.addActionListener((ActionEvent e) -> {mode = 5;});
+        enterModeBtn.setBounds(350, 380, 100, 30);
+        enterModeBtn.addActionListener((ActionEvent e) -> {mode = 7;});
         add(enterModeBtn);
         
-        // Настройка кнопки режима соединения узлов
+        // Настройка кнопки режима выбора флага распознавания (выход)
         exitModeBtn = new JButton("Toggle exit");
-        exitModeBtn.setBounds(350, 340, 100, 30);
-        exitModeBtn.addActionListener((ActionEvent e) -> {mode = 6;});
+        exitModeBtn.setBounds(350, 420, 100, 30);
+        exitModeBtn.addActionListener((ActionEvent e) -> {mode = 8;});
         add(exitModeBtn);
         
-        // Настройка кнопки режима соединения узлов
+        // Настройка кнопки режима смещения
         offsetModeBtn = new JButton("Offset");
-        offsetModeBtn.setBounds(350, 380, 100, 30);
-        offsetModeBtn.addActionListener((ActionEvent e) -> {mode = 7;});
+        offsetModeBtn.setBounds(350, 460, 100, 30);
+        offsetModeBtn.addActionListener((ActionEvent e) -> {mode = 9;});
         add(offsetModeBtn);
         
         // Надпись, показывающая смещение
@@ -113,6 +128,7 @@ public class Automat extends JFrame {
         offsetLabel.setBounds(20, 350, 200, 20);
         add(offsetLabel);
         
+        // Строка перехода
         letterSetter = new JTextField();
         letterSetter.setBounds(350, 30, 200, 20);
         letterSetter.setText("a");
@@ -150,17 +166,28 @@ public class Automat extends JFrame {
 //                    connectionsTA.setText(vis.getConns());
                     break;
                     
-                case 4: // Добавление петли
-                    // код код код
+                case 5: // Добавление петли
+                    addLoop(e);
                     break;
                     
-                case 5: // Установка входа
+                case 6: // Убрать петлю
+                    removeLoop(e);
+                    break;
+                    
+                case 7: // Установка входа
                     setEnter(e);
                     break;
                     
-                case 6: // Установка выхода
+                case 8: // Установка выхода
                     setExit(e);
                     break;
+                
+                case 9: // Установка смещения в начальное положение
+                    old_offset_x = 0;
+                    old_offset_y = 0;
+                    vis.setOffset(old_offset_x, old_offset_y);
+                    vis.repaint();
+                    offsetLabel.setText("Offset: 0 0");
                 default:
                     break;
             }
@@ -181,7 +208,10 @@ public class Automat extends JFrame {
                     addArrow(e);
 //                    connectionsTA.setText(vis.getConns());
                     break;
-                case 7:
+                case 6: // Удаление соединения
+                    removeFrom(e);
+                    break;
+                case 9: // Инициализация смещения
                     getOldCoords(e);
                     break;
                 default:
@@ -193,7 +223,7 @@ public class Automat extends JFrame {
         public void mouseDragged(MouseEvent e) {
 
             switch(mode) {
-                case 3:
+                case 3: // Перемещение узла
                     updateNode(e);
 //                    connectionsTA.setText(vis.getConns());
                     break;
@@ -201,7 +231,9 @@ public class Automat extends JFrame {
                     moveArrow(e);
 //                    connectionsTA.setText(vis.getConns());
                     break;
-                case 7:
+                case 6: // Удаление перехода
+                    break;
+                case 9:
                     setOffset(e);
 //                    connectionsTA.setText(vis.getConns());
                     break;
@@ -222,7 +254,10 @@ public class Automat extends JFrame {
                     fixArrow(e);
 //                    connectionsTA.setText(vis.getConns());
                     break;
-                case 7:
+                case 6: // Удаление перехода
+                    removeTo(e);
+                    break;
+                case 9:
                     setOffset(e);
                     saveOffset(e);
                     break;
@@ -264,6 +299,34 @@ public class Automat extends JFrame {
             int x = e.getX();
             int y = e.getY();
             vis.fixArrow(x, y);
+            vis.repaint();
+        }
+        
+        private void addLoop(MouseEvent e) {
+            int x = e.getX();
+            int y = e.getY();
+            vis.setLetter(letterSetter.getText());
+            vis.addLoop(x, y);
+            vis.repaint();
+        }
+        
+        private void removeLoop(MouseEvent e) {
+            int x = e.getX();
+            int y = e.getY();
+            vis.removeLoop(x, y);
+            vis.repaint();
+        }
+        
+        private void removeFrom(MouseEvent e) {
+            int x = e.getX();
+            int y = e.getY();
+            vis.removeFrom(x, y);
+        }
+        
+        private void removeTo(MouseEvent e) {
+            int x = e.getX();
+            int y = e.getY();
+            vis.removeTo(x, y);
             vis.repaint();
         }
         

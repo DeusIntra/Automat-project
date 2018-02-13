@@ -160,6 +160,79 @@ public class Visualizer extends JPanel {
         }
     }
     
+    // Добавление соединения с самим собой
+    public void addLoop(int x, int y) {
+        int index = getElemIndexAt(x, y);
+        if (index != -1 && letter.length() != 0) {
+            
+            Node node = nodes.get(index);
+            // Проверка на наличие соединения с самим собой
+            for (int i = 0; i < connections.size(); i++) {
+                Connection conn = connections.get(i);
+                Node from = conn.getFrom();
+                Node to = conn.getTo();
+                if (node == from && from == to) {
+                    connections.remove(i);
+                    break;
+                }
+            }
+            Connection conn = new Connection(node, node, letter);
+            connections.add(conn);
+        }
+    }
+    
+    // Удаляет петлю
+    public void removeLoop(int x, int y) {
+        int index = getElemIndexAt(x, y);
+        if (index != -1) {
+            Node node = nodes.get(index);
+            for(int i = 0; i < connections.size(); i++) {
+                Connection conn = connections.get(i);
+                Node from = conn.getFrom();
+                Node to = conn.getTo();
+                if (node == from && from == to) {
+                    connections.remove(i);
+                    break;
+                }
+            }
+        }
+    }
+    
+    // Выбор узла начала соединения для его удаления в будущем
+    public void removeFrom(int x, int y) {
+        if (current_elem_index == -1)
+            current_elem_index = getElemIndexAt(x, y);
+    }
+    
+    // Выбор узла конца соединения для его удаления
+    public void removeTo(int x, int y) {
+        
+        int other_elem_index = -1;
+        if (current_elem_index != -1)
+            other_elem_index = getElemIndexAt(x, y);
+        
+        if (other_elem_index != -1) {
+            
+            // Выбранные пользователем узлы
+            Node from = nodes.get(current_elem_index);
+            Node to = nodes.get(other_elem_index);
+            
+            for (int i = 0; i < connections.size(); i++) {
+                Connection conn = connections.get(i);
+                Node from2 = conn.getFrom();
+                Node to2 = conn.getTo();
+                
+                // Сравнение элементов соединения с выбранными узлами
+                if (from == from2 && to == to2) {
+                    connections.remove(i);
+                    break;
+                }
+            }
+        }
+        // Конец работы с активным элементом
+        current_elem_index = -1;
+    }
+    
     // Устанавливает вход в одном из узлов
     public void setEnter(int x, int y) {
         int index = getElemIndexAt(x, y);
@@ -290,6 +363,35 @@ public class Visualizer extends JPanel {
         
     }
     
+    private void drawLoop(Graphics g, int x, int y, String weight) {
+        
+        int upper_left_x = x + node_diam / 2;
+        int upper_left_y = y - node_diam;
+        int width = node_diam * 4;
+        int height = node_diam * 2;
+        
+        // Центр эллипса, на котором лежит дуга
+        int mid_x = upper_left_x + width/2;
+        int mid_y = upper_left_y + height/2;
+        
+        // Точка начала крыльев стрелки
+        int arrow_x = (int) (mid_x + cos(-PI*5/6) * width/2);
+        int arrow_y = (int) (mid_y - sin(-PI*5/6) * height/2);
+        
+        // Дуга
+        g.drawArc(upper_left_x, upper_left_y, width, height, -150, 300);
+        // "Крылья" стрелки
+        g.drawLine(arrow_x, arrow_y, arrow_x + 7, arrow_y);
+        g.drawLine(arrow_x, arrow_y, (int) (arrow_x + cos(-PI/3)*7), (int) (arrow_y - sin(-PI/3)*7));
+        
+        int x1 = upper_left_x + width;
+        int y1 = upper_left_y;
+        int x2 = x1;
+        int y2 = y1 + height;
+        // Надпись
+        drawConnLetter(weight, g, x1, y1, x2, y2);
+    }
+    
     // Рисует строку перехода на середине стрелки внутри прямоугольника
     private void drawConnLetter(String letter, Graphics g, int x1, int y1, int x2, int y2) {
         int mid_x = x1 + (x2-x1)/2;
@@ -363,6 +465,12 @@ public class Visualizer extends JPanel {
             int from_y = from.getY();
             int to_x = to.getX();
             int to_y = to.getY();
+            
+            // Если переход к самому себе
+            if (from.equals(to)) {
+                drawLoop(g, from_x+offset_x, from_y+offset_y, weight);
+                continue;
+            }
             
             // Если есть обратный переход
             if(conn.has_reverse) {

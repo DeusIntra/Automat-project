@@ -353,19 +353,23 @@ public class Visualizer extends JPanel {
                 }
             }
             
+            // Если есть обратный переход
             if(has_reverse) {
+                // Координаты со смещением
                 int x1 = from_x + offset_x;
                 int y1 = from_y + offset_y;
                 int x2 = to_x + offset_x;
                 int y2 = to_y + offset_y;
+                // Отрисовка кривой со стрелкой
                 drawArcArrow(g, x1, y1, x2, y2);
                 
                 // Подпись к кривой
                 double alpha = atan2((to_y - from_y), (to_x - from_x));
-                int x1_w = (int)(from_x + sin(alpha) * node_diam*2) + offset_x;
-                int y1_w = (int)(from_y - cos(alpha) * node_diam*2) + offset_y;
-                int x2_w = (int)(to_x + sin(alpha) * node_diam*2) + offset_x;
-                int y2_w = (int)(to_y - cos(alpha) * node_diam*2) + offset_y;
+                int x1_w = (int)(x1 + sin(alpha) * node_diam*2);
+                int y1_w = (int)(y1 - cos(alpha) * node_diam*2);
+                int x2_w = (int)(x2 + sin(alpha) * node_diam*2);
+                int y2_w = (int)(y2 - cos(alpha) * node_diam*2);
+                // Отрисовка подписи
                 drawConnLetter(weight, g, x1_w, y1_w, x2_w, y2_w);
             }
             else {
@@ -378,8 +382,9 @@ public class Visualizer extends JPanel {
                 int y1 = from_y + dimin_y + offset_y;
                 int x2 = to_x - dimin_x + offset_x;
                 int y2 = to_y - dimin_y + offset_y;
-
-                drawArrow(g, x1, y1, x2, y2);            
+                // Стрелка
+                drawArrow(g, x1, y1, x2, y2);
+                // Подпись к стрелке
                 drawConnLetter(weight, g, x1, y1, x2, y2);
             }
         }

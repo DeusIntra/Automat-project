@@ -166,18 +166,35 @@ public class Visualizer extends JPanel {
         if (index != -1 && letter.length() != 0) {
             
             Node node = nodes.get(index);
-            // Проверка на наличие соединения с самим собой
-            for (int i = 0; i < connections.size(); i++) {
+            // Проверка на существование второго такого же перехода к другому узлу,
+            // проверка на соединение с самим собой
+            for (int i = connections.size()-1; i >= 0; i--) {
                 Connection conn = connections.get(i);
                 Node from = conn.getFrom();
                 Node to = conn.getTo();
-                if (node == from && from == to) {
+                if (from == node && conn.getWeight().equals(letter)) {
+                    if (conn.has_reverse) {
+                        for (Connection rev : connections) {
+                            if (rev.has_reverse)
+                                // Работает - не трогай
+                                if (rev.getFrom() == to && rev.getTo() == from)
+                                    rev.has_reverse = false;
+                        }
+                    }
                     connections.remove(i);
-                    break;
                 }
+                if (node == from && from == to)
+                    connections.remove(i);
+                
             }
+            for (int i = connections.size()-1; i >= 0; i--) {
+                    Connection conn = connections.get(i);
+                    Node from = conn.getFrom();
+                    Node to = conn.getTo();
+                    }
             Connection conn = new Connection(node, node, letter);
             connections.add(conn);
+            
         }
     }
     

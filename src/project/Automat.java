@@ -12,19 +12,18 @@ public class Automat extends JFrame {
     private int frameHeight;    
     
     private final Visualizer vis;
-    private final JButton defaultModeBtn;
-    private final JButton addModeBtn;
-    private final JButton removeModeBtn;
-    private final JButton dragModeBtn;
-    private final JButton connectModeBtn;
-    private final JButton addLoopModeBtn;
-    private final JButton disconnectModeBtn;
-    private final JButton enterModeBtn;
-    private final JButton exitModeBtn;
-    private final JButton offsetModeBtn;
+    private JButton defaultModeBtn;
+    private JButton addModeBtn;
+    private JButton removeModeBtn;
+    private JButton dragModeBtn;
+    private JButton connectModeBtn;
+    private JButton addLoopModeBtn;
+    private JButton disconnectModeBtn;
+    private JButton enterModeBtn;
+    private JButton exitModeBtn;
+    private JButton offsetModeBtn;
     private final JLabel offsetLabel;
     private final JTextField letterSetter;
-//    private final JTextArea connectionsTA;
     
     /*
     0 - Ничего
@@ -49,10 +48,6 @@ public class Automat extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(frameWidth, frameHeight);
         setLayout(null);
-                
-//        connectionsTA = new JTextArea();
-//        connectionsTA.setBounds(480, 100, 300, 300);
-//        add(connectionsTA);
         
         // Настройка панели
         vis = new Visualizer(10);
@@ -64,64 +59,34 @@ public class Automat extends JFrame {
         add(vis);
         
         // Настройка кнопки обычного режима
-        defaultModeBtn = new JButton("Default");
-        defaultModeBtn.setBounds(350, 100, 100, 30);
-        defaultModeBtn.addActionListener((ActionEvent e) -> {mode = 0;});
-        add(defaultModeBtn);
+        addButton(defaultModeBtn, "Default", 0, 350, 100, 100, 30);
         
         // Настройка кнопки режима добавления узла
-        addModeBtn = new JButton("Add");
-        addModeBtn.setBounds(350, 140, 100, 30);
-        addModeBtn.addActionListener((ActionEvent e) -> {mode = 1;});
-        add(addModeBtn);
+        addButton(addModeBtn, "Add", 1, 350, 140, 100, 30);
         
         // Настройка кнопки режима удаления узла
-        removeModeBtn = new JButton("Remove");
-        removeModeBtn.setBounds(350, 180, 100, 30);
-        removeModeBtn.addActionListener((ActionEvent e) -> {mode = 2;});
-        add(removeModeBtn);
+        addButton(removeModeBtn, "Remove", 2, 350, 180, 100, 30);
         
         // Настройка кнопки режима перемещения узла
-        dragModeBtn = new JButton("Drag");
-        dragModeBtn.setBounds(350, 220, 100, 30);
-        dragModeBtn.addActionListener((ActionEvent e) -> {mode = 3;});
-        add(dragModeBtn);
+        addButton(dragModeBtn, "Drag", 3, 350, 220, 100, 30);
         
         // Настройка кнопки режима соединения узлов
-        connectModeBtn = new JButton("Connect");
-        connectModeBtn.setBounds(350, 260, 100, 30);
-        connectModeBtn.addActionListener((ActionEvent e) -> {mode = 4;});
-        add(connectModeBtn);
+        addButton(connectModeBtn, "Connect", 4, 350, 260, 100, 30);
         
         // Настройка кнопки режима добавления петли
-        addLoopModeBtn = new JButton("Add loop");
-        addLoopModeBtn.setBounds(350, 300, 100, 30);
-        addLoopModeBtn.addActionListener((ActionEvent e) -> {mode = 5;});
-        add(addLoopModeBtn);
+        addButton(addLoopModeBtn, "Add loop", 5, 350, 300, 100, 30);
                 
         // Настройка кнопки режима удаления соединения
-        disconnectModeBtn = new JButton("Disconnect");
-        disconnectModeBtn.setBounds(350, 340, 100, 30);
-        disconnectModeBtn.addActionListener((ActionEvent e) -> {mode = 6;});
-        add(disconnectModeBtn);
+        addButton(disconnectModeBtn, "Disconnect", 6, 350, 340, 100, 30);
         
         // Настройка кнопки режима выбора входа
-        enterModeBtn = new JButton("Set enter");
-        enterModeBtn.setBounds(350, 380, 100, 30);
-        enterModeBtn.addActionListener((ActionEvent e) -> {mode = 7;});
-        add(enterModeBtn);
+        addButton(enterModeBtn, "Set enter", 7, 350, 380, 100, 30);
         
         // Настройка кнопки режима выбора флага распознавания (выход)
-        exitModeBtn = new JButton("Toggle exit");
-        exitModeBtn.setBounds(350, 420, 100, 30);
-        exitModeBtn.addActionListener((ActionEvent e) -> {mode = 8;});
-        add(exitModeBtn);
+        addButton(exitModeBtn, "Toggle exit", 8, 350, 420, 100, 30);
         
         // Настройка кнопки режима смещения
-        offsetModeBtn = new JButton("Offset");
-        offsetModeBtn.setBounds(350, 460, 100, 30);
-        offsetModeBtn.addActionListener((ActionEvent e) -> {mode = 9;});
-        add(offsetModeBtn);
+        addButton(offsetModeBtn, "Offset", 9, 350, 460, 100, 30);
         
         // Надпись, показывающая смещение
         offsetLabel = new JLabel("Offset: 0 0");
@@ -152,36 +117,26 @@ public class Automat extends JFrame {
                 case 1: // Добавление узла
                     vis.addElem(x, y);
                     vis.repaint();
-//                    connectionsTA.setText(vis.getConns());
                     break;
-                    
                 case 2: // Удаление узла
                     vis.removeElem(x, y);
                     vis.repaint();
-//                    connectionsTA.setText(vis.getConns());
                     break;
-                    
                 case 3: // Перемещение узла
-                    updateNode(e);   
-//                    connectionsTA.setText(vis.getConns());
+                    updateNode(e);
                     break;
-                    
                 case 5: // Добавление петли
                     addLoop(e);
                     break;
-                    
                 case 6: // Убрать петлю
                     removeLoop(e);
                     break;
-                    
                 case 7: // Установка входа
                     setEnter(e);
                     break;
-                    
                 case 8: // Установка выхода
                     setExit(e);
                     break;
-                
                 case 9: // Установка смещения в начальное положение
                     old_offset_x = 0;
                     old_offset_y = 0;
@@ -202,11 +157,9 @@ public class Automat extends JFrame {
             switch(mode) {
                 case 3: // Перемещение узла
                     updateNode(e);
-//                    connectionsTA.setText(vis.getConns());
                     break;
                 case 4: // Добавление перехода
                     addArrow(e);
-//                    connectionsTA.setText(vis.getConns());
                     break;
                 case 6: // Удаление соединения
                     removeFrom(e);
@@ -225,17 +178,14 @@ public class Automat extends JFrame {
             switch(mode) {
                 case 3: // Перемещение узла
                     updateNode(e);
-//                    connectionsTA.setText(vis.getConns());
                     break;
                 case 4: // Добавление перехода
                     moveArrow(e);
-//                    connectionsTA.setText(vis.getConns());
                     break;
                 case 6: // Удаление перехода
                     break;
                 case 9:
                     setOffset(e);
-//                    connectionsTA.setText(vis.getConns());
                     break;
                 default:
                     break;
@@ -248,11 +198,9 @@ public class Automat extends JFrame {
             switch(mode) {
                 case 3: // Установка перемещаемого узла в выбранном положении
                     fixNode(e);
-//                    connectionsTA.setText(vis.getConns());
                     break;
                 case 4: // Установка перехода
                     fixArrow(e);
-//                    connectionsTA.setText(vis.getConns());
                     break;
                 case 6: // Удаление перехода
                     removeTo(e);
@@ -371,7 +319,25 @@ public class Automat extends JFrame {
         }
     }
     
+    private class ButtonMode implements ActionListener {
+        byte action;
+        ButtonMode(int mode) {
+            action = (byte)mode;
+        }
+        
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            mode = action;
+        }
+    }
     
+    private void addButton(JButton btn, String text, int mode, int x, int y, int width, int height) {
+        btn = new JButton(text);
+        btn.setBounds(x, y, width, height);
+        btn.addActionListener(new ButtonMode(mode));
+        add(btn);
+    }
+        
     public static void main(String[] args) {
         Automat frame = new Automat();
         frame.setVisible(true);

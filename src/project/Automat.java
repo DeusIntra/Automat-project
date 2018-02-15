@@ -2,6 +2,8 @@ package project;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.Stack;
 import javax.swing.*;
 import javax.swing.event.MouseInputAdapter;
 
@@ -101,6 +103,13 @@ public class Automat extends JFrame {
 
     }
     
+    private void addButton(JButton btn, String text, int mode, int x, int y, int width, int height) {
+        btn = new JButton(text);
+        btn.setBounds(x, y, width, height);
+        btn.addActionListener(new ButtonMode(mode));
+        add(btn);
+    }
+    
     private class VisMouseListener extends MouseInputAdapter {
         
         private int old_x, old_y, old_offset_x=0, old_offset_y=0;
@@ -159,6 +168,9 @@ public class Automat extends JFrame {
                     updateNode(e);
                     break;
                 case 4: // Добавление перехода
+                    String str = letterSetter.getText();
+                    str = checkInput(str);
+                    letterSetter.setText(str);
                     addArrow(e);
                     break;
                 case 6: // Удаление соединения
@@ -317,6 +329,102 @@ public class Automat extends JFrame {
             old_offset_x += new_x - old_x;
             old_offset_y += new_y - old_y;
         }
+        
+        // Проверка и исправление введенной строки
+        private String checkInput(String str) {
+            Stack<Character> brackets = new Stack<>();
+            String output = "";
+            
+            // Проверка скобок на адекватность (удаляются только закрывающие)
+            for(int i = 0; i < str.length(); i++) {
+                char ch = str.charAt(i);
+                switch(ch) {
+                    case '(':
+                        // Не должно быть также скобок без символов внутри "()"
+                        if (i < str.length()-1 && str.charAt(i+1) == ')') i++;
+                        else {
+                            brackets.push(ch);
+                            output += ch;
+                        }
+                        break;
+                    case ')': // Игнорирует все закрывающие скобки без пары
+                        if (!brackets.empty()) {
+                            brackets.pop();
+                            output += ch;
+                        }
+                        break;
+                    default:
+                        output += ch;
+                        break;
+                }
+            }
+            
+            // Если есть открывающие скобки без пары, необходимо их убрать
+            if (!brackets.empty()) {
+                brackets.clear();
+                str = output.trim();
+                output = "";
+                
+                // Проверка скобок на адекватность (только открывающие)
+                for(int i = str.length()-1; i >= 0; i--) {
+                    char ch = str.charAt(i);
+                    switch(ch) {
+                        case ')':
+                            brackets.push(ch);
+                            output = ch + output;
+                            break;
+                        case '(': // Игнорирует все открывающие скобки без пары
+                            if (!brackets.empty()) {
+                                brackets.pop();
+                                output = ch + output;
+                            }
+                            break;
+                        default:
+                            output = ch + output;
+                            break;
+                    }
+                }
+            }
+            
+            // Проверка адекватности символов '|' и '*'
+            str = output.trim(); // Пробелы могут находиться только внутри скобок
+            output = "";
+            for (int i = 0; i < str.length(); i++) {
+                char ch = str.charAt(i);
+                switch (ch) {
+                    case '|':
+                        // Если '|' не в начале или в конце строки
+                        if (i != 0 && i != str.length()-1)
+                            // Поскольку i не в начале и не в конце строки,
+                            // то перед и после i обязательно есть символ.
+                            // Если '|' не сразу перед ')' и не сразу после '(',
+                            // а также если перед и после него не стоит '|' или '*'
+                            if (str.charAt(i-1) != '|' &&
+                                str.charAt(i+1) != '|' &&
+                                str.charAt(i-1) != '*' &&
+                                str.charAt(i+1) != '*' &&
+                                str.charAt(i-1) != '(' &&
+                                str.charAt(i+1) != ')')
+                                output += ch;
+                        break;
+                    case '*':
+                        // Если '*' не в начале и не в конце строки и после ')'
+                        if (i != 0 && i != str.length()-1)
+                            // Если перед '*' стоит ')'
+                            // и после него не стоит '*' или '|'
+                            if (str.charAt(i-1) == ')' &&
+                                str.charAt(i+1) != '*' &&
+                                str.charAt(i+1) != '|')
+                                output += ch;
+                        break;
+                    default:
+                        output += ch;
+                        break;
+                }
+            }
+            
+            return output.trim();
+        }
     }
     
     private class ButtonMode implements ActionListener {
@@ -330,14 +438,7 @@ public class Automat extends JFrame {
             mode = action;
         }
     }
-    
-    private void addButton(JButton btn, String text, int mode, int x, int y, int width, int height) {
-        btn = new JButton(text);
-        btn.setBounds(x, y, width, height);
-        btn.addActionListener(new ButtonMode(mode));
-        add(btn);
-    }
-        
+          
     public static void main(String[] args) {
         Automat frame = new Automat();
         frame.setVisible(true);

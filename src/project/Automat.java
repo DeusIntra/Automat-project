@@ -25,6 +25,8 @@ public class Automat extends JFrame {
     private JButton offsetModeBtn;
     private final JLabel offsetLabel;
     private final JTextField letterSetter;
+    private final JButton getRegularBtn;
+    private final JTextField getRegularTF;
     
     /*
     0 - Ничего
@@ -99,6 +101,24 @@ public class Automat extends JFrame {
         letterSetter.setBounds(350, 30, 200, 20);
         letterSetter.setText("a");
         add(letterSetter);
+        
+        getRegularTF = new JTextField();
+        getRegularTF.setBounds(20, 390, 200, 20);
+        add(getRegularTF);
+        
+        // Кнопка получения регулярного выражения
+        getRegularBtn = new JButton("Get regular");
+        getRegularBtn.setBounds(570, 30, 100, 30);
+        getRegularBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    getRegularTF.setText(vis.getRegular());
+                }
+                catch (RuntimeException ex) {System.out.println("Ошибка");}
+            }
+        });
+        add(getRegularBtn);
 
     }
     

@@ -294,6 +294,181 @@ public class Visualizer extends JPanel {
         return offset_x + " " + offset_y;
     }
     
+    // Возвращает регулярное выражение
+    public String getRegular() throws RuntimeException {
+        ArrayList<Node> nodes_copy = new ArrayList<>(nodes);
+        ArrayList<Connection> conns_copy = new ArrayList<>(connections);
+        
+        // Проверка на наличие входа и выходов
+        // Соединение выходов с единственным узлом
+        Node enter = null;
+        Node exit = new Node(0, 0);
+        boolean exit_exists = false;
+        for (Node node : nodes_copy) {
+            if (node.enter)
+                enter = node;
+            if (node.exit) {
+                exit_exists = true;
+                Connection conn = new Connection(node, exit, "()");
+                conns_copy.add(conn);
+            }
+        }
+        
+        
+        // Если вход или выход не найден
+        if (enter == null) throw new RuntimeException();
+        if (!exit_exists) throw new RuntimeException();
+        
+        // Пока не останутся только входной и выходной узлы
+        while (nodes_copy.size() > 1) {
+            
+            // Выбрать узел для удаления
+            Node node_to_remove = null;
+            int node_rem_index = -1;
+            int min_max_weight = 99999;
+            for (int i = 0; i < nodes_copy.size(); i++) {
+                Node node = nodes_copy.get(i);
+                if (node.enter) continue;
+                
+                int max_weight = 0;
+                for(Connection conn: conns_copy) {
+                    // Все соединения с этим узлом
+                    if (conn.getFrom() == node || conn.getTo() == node) {
+                        // Выбирается строка с наибольшей длиной
+                        String weight = conn.getWeight();
+                        if (max_weight < weight.length())
+                            max_weight = weight.length();                        
+                    }
+                }
+                
+                // Затем выбирается наименьная строка из наибольших.
+                // Связанный с ней узел будет выбран для удаления.
+                if (min_max_weight > max_weight) {
+                    node_to_remove = node;
+                    node_rem_index = i;
+                    min_max_weight = max_weight;
+                }
+            }
+            
+            // Соединить каждый вход с каждым выходом
+            // Для этого необходимо создать массивы всех входов и всех выходов
+            ArrayList<Connection> enters = new ArrayList<>();
+            ArrayList<Connection> exits = new ArrayList<>();
+            ArrayList<Connection> conns_to_remove = new ArrayList<>();
+            Connection loop = null;
+            for (Connection conn : conns_copy) {
+                Node from = conn.getFrom();
+                Node to = conn.getTo();
+                
+                if (node_to_remove == from && from == to) {
+                    loop = conn;
+                    conns_to_remove.add(conn);
+                }
+                
+                else if (node_to_remove == from) {
+                    exits.add(conn);
+                    conns_to_remove.add(conn);
+                }
+                
+                else if (node_to_remove == to) {
+                    enters.add(conn);
+                    conns_to_remove.add(conn);
+                }                    
+            }
+            
+            // Соединение каждого входа с каждым выходом
+            for (int i = 0; i < exits.size(); i++) {
+                for (int j = 0; j < enters.size(); j++) {
+                    Connection conn_from = enters.get(j);
+                    Connection conn_to = exits.get(i);
+                    Node from = conn_from.getFrom();
+                    Node to = conn_from.getTo();
+                    
+                    String weight;
+                    if (loop != null)
+                        weight = conn_from.getWeight() + 
+                                 "(" + loop.getWeight() + ")*" + 
+                                 conn_to.getWeight();
+                    else
+                        weight = conn_from.getWeight() + 
+                                 conn_to.getWeight();
+                    
+                    Connection conn = new Connection(from, to, weight);
+                    conns_copy.add(conn);
+                }
+            }
+            
+            // Удаление соединений
+            for (int i = conns_to_remove.size()-1; i >= 0; i--) {
+                for (int j = conns_copy.size()-1; j >= 0; j--) {
+                    Connection conn = conns_copy.get(j);
+                    Connection conn_to_remove = conns_to_remove.get(i);
+                    if (conn == conn_to_remove) {
+                        conns_copy.remove(j);
+                        conns_to_remove.remove(i);
+                        break;
+                    }
+                }
+            }
+            
+            // Удаление узла
+            nodes_copy.remove(node_rem_index);
+            
+            // В конце объединить параллели
+            for (int i = conns_copy.size()-1; i >= 1; i--) {
+                
+                Connection conn_1 = conns_copy.get(i);
+                boolean has_parallel = false;
+                for (int j = i-1; j >= 0; j--) {
+                    Connection conn_2 = conns_copy.get(j);
+                    
+                    Node from_1 = conn_1.getFrom();
+                    Node to_1 = conn_1.getTo();
+                    Node from_2 = conn_2.getFrom();
+                    Node to_2 = conn_2.getTo();
+                    
+                    if (from_1 == from_2 && to_1 == to_2) {
+                        String weight;
+                        if (!has_parallel) {
+                            weight = "(" + conn_1.getWeight() + "|" + conn_2.getWeight();
+                            has_parallel = true;
+                        }
+                        else weight = conn_1.getWeight() + "|" + conn_2.getWeight();
+                        
+                        conn_1.setWeight(weight);
+                        conns_copy.remove(j);
+                        i--;
+                    }
+                }
+                if (has_parallel)
+                    conn_1.setWeight(conn_1.getWeight() + ")");
+            }
+            
+        } // Конец while
+        
+        // После всех манипуляций должно остаться 2 узла (вход и выход) и 1 или 2 соединения
+        String regular;
+        Connection conn_0 = conns_copy.get(0);
+        Connection conn_1 = null;
+        if (conns_copy.size() > 1)
+            conn_1 = conns_copy.get(1);
+        
+        if (conn_1 == null) {
+            if (conn_0.getFrom() == conn_0.getTo())
+                regular = "(" + conn_0.getWeight() + ")*";
+            else
+                regular = conn_0.getWeight();
+        }
+        else {
+            if (conn_0.getFrom() == conn_0.getTo())
+                regular = "(" + conn_0.getWeight() + ")*" + conn_1.getWeight();
+            else
+                regular = "(" + conn_1.getWeight() + ")*" + conn_0.getWeight();
+        }
+        
+        return regular;
+    }
+    
     // Возвращает индекс элемента, внутри которого есть точка (x, y)
     private int getElemIndexAt(int x, int y) {
                         

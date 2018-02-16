@@ -322,6 +322,11 @@ public class Visualizer extends JPanel {
         // Пока не останутся только входной и выходной узлы
         while (nodes_copy.size() > 1) {
             
+            // Тест
+            for (Connection conn : conns_copy) {
+                System.out.println(conn.getFrom() + " > " + conn.getWeight() + " > " + conn.getTo());
+            }
+            
             // Выбрать узел для удаления
             Node node_to_remove = null;
             int node_rem_index = -1;
@@ -350,6 +355,9 @@ public class Visualizer extends JPanel {
                 }
             }
             
+            // Тест
+            System.out.println("Node to remove: " + node_to_remove);
+            
             // Соединить каждый вход с каждым выходом
             // Для этого необходимо создать массивы всех входов и всех выходов
             ArrayList<Connection> enters = new ArrayList<>();
@@ -376,13 +384,28 @@ public class Visualizer extends JPanel {
                 }                    
             }
             
+            // Тест
+            System.out.println("Enters:");
+            for (Connection conn : enters) {
+                System.out.println(conn.getFrom());
+            }
+            System.out.println("Exits:");
+            for (Connection conn : exits) {
+                System.out.println(conn.getTo());
+            }
+            System.out.println("Conns to remove:");
+            for (Connection conn : conns_to_remove) {
+                System.out.println(conn.getFrom() + " > " + conn.getTo());
+            }
+            
             // Соединение каждого входа с каждым выходом
+            // Здесь ошибка ?
             for (int i = 0; i < exits.size(); i++) {
                 for (int j = 0; j < enters.size(); j++) {
                     Connection conn_from = enters.get(j);
                     Connection conn_to = exits.get(i);
                     Node from = conn_from.getFrom();
-                    Node to = conn_from.getTo();
+                    Node to = conn_to.getTo();
                     
                     String weight;
                     if (loop != null)
@@ -394,6 +417,8 @@ public class Visualizer extends JPanel {
                                  conn_to.getWeight();
                     
                     Connection conn = new Connection(from, to, weight);
+                    // Тест
+                    System.out.println("added from: " + from + " to: " + to);
                     conns_copy.add(conn);
                 }
             }
@@ -445,6 +470,10 @@ public class Visualizer extends JPanel {
             }
             
         } // Конец while
+        
+        for (Connection conn : conns_copy) {
+            System.out.println(conn.getFrom() + " > " + conn.getWeight() + " > " + conn.getTo());
+        }
         
         // После всех манипуляций должно остаться 2 узла (вход и выход) и 1 или 2 соединения
         String regular;

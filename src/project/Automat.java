@@ -9,22 +9,13 @@ import javax.swing.event.MouseInputAdapter;
 
 public class Automat extends JFrame {
     
-    private int frameWidth;
-    private int frameHeight;    
+    private int contentPaneWidth;
+    private int contentPaneHeight;    
     
+    ViewSettingsDialog view_settings;
     private final GRMenu menu;
     private final Visualizer vis;
-//    private JButton defaultModeBtn;
-//    private JButton addModeBtn;
-//    private JButton removeModeBtn;
-//    private JButton dragModeBtn;
-//    private JButton connectModeBtn;
-//    private JButton addLoopModeBtn;
-//    private JButton disconnectModeBtn;
-//    private JButton enterModeBtn;
-//    private JButton exitModeBtn;
-//    private JButton offsetModeBtn;
-    private final JLabel offsetLabel;
+//    private final JLabel offsetLabel;
     private final JTextField letterSetter;
     private final JButton getRegularBtn;
     private final JTextField getRegularTF;
@@ -45,21 +36,64 @@ public class Automat extends JFrame {
     
     public Automat() {
         mode = 0;
-        frameWidth = 800;
-        frameHeight = 600;
         
-        // Настройка окна
+        // Настройка окна программы
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(frameWidth, frameHeight);
+        setSize(800, 600);
         setLayout(null);
+        contentPaneWidth = 792;
+        contentPaneHeight = 547;
+        // Когда окно меняет размер, меняется размер и положение компонентов
+        getRootPane().addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                contentPaneWidth = getContentPane().getWidth();
+                contentPaneHeight = getContentPane().getHeight();
+                
+                if (contentPaneWidth - 160 > 300) {
+                    if (contentPaneHeight - 120 > 300) {
+                        vis.setSize(contentPaneWidth - 160, contentPaneHeight - 120);
+                        getRegularBtn.setLocation(20, contentPaneHeight - 40);
+                        getRegularTF.setBounds(140, contentPaneHeight - 40, contentPaneWidth - 160, 20);
+
+                    }
+                    else {
+                        vis.setSize(contentPaneWidth - 160, vis.getHeight());
+                        getRegularTF.setSize(contentPaneWidth - 160, 20);
+                    }
+                }
+                else {
+                    if (contentPaneHeight - 120 > 300) {
+                        vis.setSize(vis.getWidth(), contentPaneHeight - 120);
+                        getRegularBtn.setLocation(20, contentPaneHeight - 40);
+                        getRegularTF.setLocation(140, contentPaneHeight - 40);
+                    }
+                    else {
+                        vis.setSize(300, 300);
+                        getRegularBtn.setLocation(20, 380);
+                        getRegularTF.setBounds(140, 380, 300, 20);
+                    }
+                }
+            }
+        });
+        
+        // Окно настроек вида
+        view_settings = new ViewSettingsDialog(this, "Настройки вида");
         
         // Меню
         menu = new GRMenu(this);
+        menu.view_settings.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                view_settings.setVisible(true);
+                view_settings.reset();
+            }
+        });
         setJMenuBar(menu);
         
         // Панель кнопок рисования
         ButtonPanel bp = new ButtonPanel();
-        bp.setBounds(470, 100, bp.width(), bp.height());
+        bp.setBounds(20, 20, bp.width(), bp.height());
         for(int i = 0; i < bp.buttons.size(); i++) {
             JButton button = bp.buttons.get(i);
             button.addActionListener(new ButtonMode(i+1));
@@ -67,43 +101,47 @@ public class Automat extends JFrame {
         bp.setBackground(Color.red);
         add(bp);
         
+        // Строка перехода
+        letterSetter = new JTextField();
+        letterSetter.setBounds(20, 20 + bp.height() + 20, 100, 20);
+        letterSetter.setText("a");
+        add(letterSetter);
+        
+//        // Надпись, показывающая смещение
+//        offsetLabel = new JLabel("Offset: 0 0");
+//        offsetLabel.setBounds(20, 350, 200, 20);
+//        add(offsetLabel);        
+        
         // Настройка панели
         vis = new Visualizer(10);
-        vis.setBounds(20, 30, 300, 300);
+        vis.setBounds(140, 20, contentPaneWidth - 160, contentPaneHeight - 120);
         vis.setBackground(Color.WHITE);
+        vis.setBorder(BorderFactory.createLineBorder(Color.black));
         VisMouseListener listener = new VisMouseListener();
         vis.addMouseListener(listener);
         vis.addMouseMotionListener(listener);
         add(vis);
         
-        // Надпись, показывающая смещение
-        offsetLabel = new JLabel("Offset: 0 0");
-        offsetLabel.setBounds(20, 350, 200, 20);
-        add(offsetLabel);
-        
-        // Строка перехода
-        letterSetter = new JTextField();
-        letterSetter.setBounds(350, 30, 200, 20);
-        letterSetter.setText("a");
-        add(letterSetter);
-        
-        getRegularTF = new JTextField();
-        getRegularTF.setBounds(20, 390, 200, 20);
-        add(getRegularTF);
-        
         // Кнопка получения регулярного выражения
-        getRegularBtn = new JButton("Get regular");
-        getRegularBtn.setBounds(570, 30, 100, 30);
+        getRegularBtn = new JButton("Получить");
+        getRegularBtn.setBounds(20, contentPaneHeight - 40, 100, 20);
         getRegularBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
                     getRegularTF.setText(vis.getRegular());
                 }
-                catch (RuntimeException ex) {System.out.println("Ошибка");}
+                catch (RuntimeException ex) {System.out.println(contentPaneWidth + " " + contentPaneHeight);}
             }
         });
         add(getRegularBtn);
+        
+        // Поле вывода регулярного выражения
+        getRegularTF = new JTextField();
+        getRegularTF.setEditable(false);
+        getRegularTF.setBackground(Color.WHITE);
+        getRegularTF.setBounds(140, contentPaneHeight - 40, contentPaneWidth - 160, 20);
+        add(getRegularTF);
 
     }
     
@@ -148,7 +186,7 @@ public class Automat extends JFrame {
                     old_offset_y = 0;
                     vis.setOffset(old_offset_x, old_offset_y);
                     vis.repaint();
-                    offsetLabel.setText("Offset: 0 0");
+//                    offsetLabel.setText("Offset: 0 0");
                 default:
                     break;
             }
@@ -316,7 +354,7 @@ public class Automat extends JFrame {
             int offset_y = new_y - old_y + old_offset_y;
             vis.setOffset(offset_x, offset_y);
             vis.repaint();
-            offsetLabel.setText("Offset: " + vis.getOffset());
+//            offsetLabel.setText("Offset: " + vis.getOffset());
         }
         
         private void saveOffset(MouseEvent e) {

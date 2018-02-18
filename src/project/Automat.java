@@ -12,17 +12,18 @@ public class Automat extends JFrame {
     private int frameWidth;
     private int frameHeight;    
     
+    private final GRMenu menu;
     private final Visualizer vis;
-    private JButton defaultModeBtn;
-    private JButton addModeBtn;
-    private JButton removeModeBtn;
-    private JButton dragModeBtn;
-    private JButton connectModeBtn;
-    private JButton addLoopModeBtn;
-    private JButton disconnectModeBtn;
-    private JButton enterModeBtn;
-    private JButton exitModeBtn;
-    private JButton offsetModeBtn;
+//    private JButton defaultModeBtn;
+//    private JButton addModeBtn;
+//    private JButton removeModeBtn;
+//    private JButton dragModeBtn;
+//    private JButton connectModeBtn;
+//    private JButton addLoopModeBtn;
+//    private JButton disconnectModeBtn;
+//    private JButton enterModeBtn;
+//    private JButton exitModeBtn;
+//    private JButton offsetModeBtn;
     private final JLabel offsetLabel;
     private final JTextField letterSetter;
     private final JButton getRegularBtn;
@@ -52,6 +53,20 @@ public class Automat extends JFrame {
         setSize(frameWidth, frameHeight);
         setLayout(null);
         
+        // Меню
+        menu = new GRMenu(this);
+        setJMenuBar(menu);
+        
+        // Панель кнопок рисования
+        ButtonPanel bp = new ButtonPanel();
+        bp.setBounds(470, 100, bp.width(), bp.height());
+        for(int i = 0; i < bp.buttons.size(); i++) {
+            JButton button = bp.buttons.get(i);
+            button.addActionListener(new ButtonMode(i+1));
+        }
+        bp.setBackground(Color.red);
+        add(bp);
+        
         // Настройка панели
         vis = new Visualizer(10);
         vis.setBounds(20, 30, 300, 300);
@@ -60,36 +75,6 @@ public class Automat extends JFrame {
         vis.addMouseListener(listener);
         vis.addMouseMotionListener(listener);
         add(vis);
-        
-        // Настройка кнопки обычного режима
-        addButton(defaultModeBtn, "Default", 0, 350, 100, 100, 30);
-        
-        // Настройка кнопки режима добавления узла
-        addButton(addModeBtn, "Add", 1, 350, 140, 100, 30);
-        
-        // Настройка кнопки режима удаления узла
-        addButton(removeModeBtn, "Remove", 2, 350, 180, 100, 30);
-        
-        // Настройка кнопки режима перемещения узла
-        addButton(dragModeBtn, "Drag", 3, 350, 220, 100, 30);
-        
-        // Настройка кнопки режима соединения узлов
-        addButton(connectModeBtn, "Connect", 4, 350, 260, 100, 30);
-        
-        // Настройка кнопки режима добавления петли
-        addButton(addLoopModeBtn, "Add loop", 5, 350, 300, 100, 30);
-                
-        // Настройка кнопки режима удаления соединения
-        addButton(disconnectModeBtn, "Disconnect", 6, 350, 340, 100, 30);
-        
-        // Настройка кнопки режима выбора входа
-        addButton(enterModeBtn, "Set enter", 7, 350, 380, 100, 30);
-        
-        // Настройка кнопки режима выбора флага распознавания (выход)
-        addButton(exitModeBtn, "Toggle exit", 8, 350, 420, 100, 30);
-        
-        // Настройка кнопки режима смещения
-        addButton(offsetModeBtn, "Offset", 9, 350, 460, 100, 30);
         
         // Надпись, показывающая смещение
         offsetLabel = new JLabel("Offset: 0 0");
@@ -120,13 +105,6 @@ public class Automat extends JFrame {
         });
         add(getRegularBtn);
 
-    }
-    
-    private void addButton(JButton btn, String text, int mode, int x, int y, int width, int height) {
-        btn = new JButton(text);
-        btn.setBounds(x, y, width, height);
-        btn.addActionListener(new ButtonMode(mode));
-        add(btn);
     }
     
     private class VisMouseListener extends MouseInputAdapter {

@@ -14,7 +14,7 @@ import static java.lang.Math.hypot;
 import static java.lang.Math.pow;
 
 
-public class Visualizer extends JPanel {
+public class Visualizer extends Canvas {
     
     private final ArrayList<Node> nodes;        // Расширяемый массив узлов
     private final ArrayList<Connection> connections;  // Массив переходов
@@ -183,7 +183,7 @@ public class Visualizer extends JPanel {
                     }
                     connections.remove(i);
                 }
-                if (node == from && from == to)
+                else if (node == from && from == to)
                     connections.remove(i);
                 
             }
@@ -634,12 +634,12 @@ public class Visualizer extends JPanel {
     }
     
     @Override
-    protected void paintComponent(Graphics g) {
+    public void paint(Graphics g) {
         
         // Размеры шрифта
         font_metrics = g.getFontMetrics(g.getFont());
         
-        super.paintComponent(g); // Рисует панель
+        super.paint(g); // Рисует панель
         
         // Рисует все узлы
         Node node;

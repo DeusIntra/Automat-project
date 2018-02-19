@@ -136,8 +136,10 @@ public class Visualizer extends JPanel {
                                 if (rev.has_reverse)
                                     // Работает - не трогай
                                     // Это эффективно, честно
-                                    if (rev.getFrom() == to && rev.getTo() == from)
+                                    if (rev.getFrom() == to && rev.getTo() == from) {
                                         rev.has_reverse = false;
+                                        break;
+                                    }
                             }
                         }
                         connections.remove(i);
@@ -187,11 +189,7 @@ public class Visualizer extends JPanel {
                     connections.remove(i);
                 
             }
-            for (int i = connections.size()-1; i >= 0; i--) {
-                    Connection conn = connections.get(i);
-                    Node from = conn.getFrom();
-                    Node to = conn.getTo();
-                    }
+            
             Connection conn = new Connection(node, node, letter);
             connections.add(conn);
             
@@ -234,13 +232,25 @@ public class Visualizer extends JPanel {
             Node from = nodes.get(current_elem_index);
             Node to = nodes.get(other_elem_index);
             
-            for (int i = 0; i < connections.size(); i++) {
+            for (int i = connections.size()-1; i >= 0; i--) {
                 Connection conn = connections.get(i);
                 Node from2 = conn.getFrom();
                 Node to2 = conn.getTo();
                 
                 // Сравнение элементов соединения с выбранными узлами
                 if (from == from2 && to == to2) {
+                    // Подготовка к удалению - проверка на наличие обратного соединения
+                    if (conn.has_reverse) {
+                        for (Connection rev : connections) {
+                            if (rev.has_reverse) {
+                                if (rev.getFrom() == to && rev.getTo() == from) {
+                                    rev.has_reverse = false;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    // Удаление
                     connections.remove(i);
                     break;
                 }

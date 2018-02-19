@@ -10,7 +10,7 @@ public class GRMenu extends JMenuBar {
     private final JMenu file, view;
     public JMenuItem exit, view_settings;
     
-    public GRMenu(JFrame f) {
+    public GRMenu(final JFrame f) {
         file = new JMenu("File");
         view = new JMenu("View");
         

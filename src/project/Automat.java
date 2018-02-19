@@ -19,6 +19,9 @@ public class Automat extends JFrame {
     private final JTextField letterSetter;
     private final JButton getRegularBtn;
     private final JTextField getRegularTF;
+    private final JMenuItem copy;
+    private final JMenuItem copy_selected;
+    private final JPopupMenu popupMenu;
     
     /*
     0 - Ничего
@@ -36,6 +39,25 @@ public class Automat extends JFrame {
     
     public Automat() {
         mode = 0;
+        
+        copy = new JMenuItem("Копировать");
+        copy.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                getRegularTF.selectAll();
+                getRegularTF.copy();
+            }
+        });
+        copy_selected = new JMenuItem("Копировать выделенное");
+        copy_selected.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                getRegularTF.copy();
+            }
+        });
+        popupMenu = new JPopupMenu();
+        popupMenu.add(copy);
+        popupMenu.add(copy_selected);
         
         // Настройка окна программы
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -137,10 +159,18 @@ public class Automat extends JFrame {
         add(getRegularBtn);
         
         // Поле вывода регулярного выражения
+        JFrame f = this;
         getRegularTF = new JTextField();
         getRegularTF.setEditable(false);
         getRegularTF.setBackground(Color.WHITE);
         getRegularTF.setBounds(140, contentPaneHeight - 40, contentPaneWidth - 160, 20);
+        getRegularTF.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getButton() != 3) return;                
+                popupMenu.show(f, e.getX()+145, e.getY()+555);
+            }
+        });
         add(getRegularTF);
 
     }

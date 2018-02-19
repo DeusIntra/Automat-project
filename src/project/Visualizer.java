@@ -20,6 +20,7 @@ public class Visualizer extends JPanel {
     private final ArrayList<Connection> connections;  // Массив переходов
     private int node_diam;                      // Диаметр узлов
     public double min_dist;                     // Минимальное расстояние между узлами
+    private double arc_scale;
     private int current_elem_index;             // Индекс активного элемента
     private int enter_index;                    // Индекс узла, являющегося входом
     private int offset_x, offset_y;             // Отклонение для перемещения вида
@@ -28,6 +29,7 @@ public class Visualizer extends JPanel {
     private FontMetrics font_metrics;           // Размеры шрифта
     private String letter;                      // Строка для переходов
     private Point current_arrow;                // Конечная точка активного перехода
+    public boolean show_net;                    // Нужно ли показывать сетку
     
     public Visualizer(int diam) {
         nodes = new ArrayList<>();
@@ -39,9 +41,10 @@ public class Visualizer extends JPanel {
         offset_x = 0;
         offset_y = 0;
         font_size = 14;
-        font = new Font(Font.MONOSPACED, Font.PLAIN, font_size);
+        font = new Font(Font.SANS_SERIF, Font.PLAIN, font_size);
         letter = "";
         current_arrow = null;
+        arc_scale = 3;
     }
     
     // Добавляет узел
@@ -77,8 +80,7 @@ public class Visualizer extends JPanel {
     
     // Двигает узел (пока зажата кнопка мыши)
     public void moveElem(int x, int y) {
-        if (current_elem_index == -1)
-            current_elem_index = getElemIndexAt(x, y);
+        chooseActiveNode(x, y);
         if (current_elem_index != -1) {
             Node node = nodes.get(current_elem_index);
             node.set(x - offset_x, y - offset_y);
@@ -99,8 +101,7 @@ public class Visualizer extends JPanel {
     
     // В режиме добавления соединения при нажатии кнопки мыши
     public void addArrow(int x, int y) {
-        if (current_elem_index == -1)
-            current_elem_index = getElemIndexAt(x, y);
+        chooseActiveNode(x, y);
         if (current_elem_index != -1 && letter.length() != 0) {
             current_arrow = new Point(x - offset_x, y - offset_y);
         }
@@ -213,8 +214,8 @@ public class Visualizer extends JPanel {
         }
     }
     
-    // Выбор узла начала соединения для его удаления в будущем
-    public void removeFrom(int x, int y) {
+    // Выбор активного узла
+    public void chooseActiveNode(int x, int y) {
         if (current_elem_index == -1)
             current_elem_index = getElemIndexAt(x, y);
     }
@@ -564,7 +565,7 @@ public class Visualizer extends JPanel {
         // Кривая представляет собой дугу на эллипсе.
         // Ширина эллипса - его большая полуось * 2, высота - малая полуось * 2
         int arc_width = (int)hypot((x2 - x1), (y2 - y1));
-        int arc_height = node_diam*4;
+        int arc_height = (int) (node_diam * arc_scale);
         
         // Центральная точка эллипса, на котором рисуется дуга
         int oval_mid_x = x1 + arc_width / 2;
@@ -643,11 +644,46 @@ public class Visualizer extends JPanel {
         g.setColor(Color.BLACK);
     }
     
+    // Установить цвет узла
+    public void setNodeColor(Color color, int x, int y) {
+        int index = getElemIndexAt(x, y);
+        if (index != -1) {
+            Node node = nodes.get(index);
+            node.setColor(color);
+        }
+    }
+    
+    // Устанавливает цвет соединения
+    public void setConnColor(Color color, int x, int y) {
+        if (current_elem_index != -1) {
+            int other_index = getElemIndexAt(x, y);
+            if (other_index != -1) {
+                Node from = nodes.get(current_elem_index);
+                Node to = nodes.get(other_index);
+                
+                // Нахождение нужного соединения
+                for (Connection conn : connections) {
+                    if (conn.getFrom() == from && conn.getTo() == to) {
+                        conn.setColor(color);
+                        break;
+                    }
+                }
+            }
+            current_elem_index = -1;
+        }
+    }
+    
+    // Установить шрифт переходов
+    public void setLetterFont(Font f) {
+        font = f;
+    }
+    
     @Override
     public void paintComponent(Graphics g) {
         
         // Размеры шрифта
-        font_metrics = g.getFontMetrics(g.getFont());
+        g.setFont(font);
+        font_metrics = g.getFontMetrics(font);
         
         super.paintComponent(g); // Рисует панель
         
@@ -666,6 +702,7 @@ public class Visualizer extends JPanel {
             int y_top_left = y - (node_diam / 2) + offset_y;
             
             // Отрисовка узла
+            g.setColor(node.getColor());
             g.drawOval(x_top_left, y_top_left, node_diam, node_diam);
             
             // Отрисовка выходов
@@ -673,6 +710,7 @@ public class Visualizer extends JPanel {
                 drawArrow(g, 
                         x + offset_x, y-node_diam/2 + offset_y, 
                         x + offset_x, y-node_diam*2 + offset_y);
+//            g.setColor(Color.BLACK);
         }
         
         // Отрисовка входа
@@ -681,6 +719,7 @@ public class Visualizer extends JPanel {
             int x = node.getX();
             int y = node.getY();
             
+            g.setColor(node.getColor());
             drawArrow(g, 
                     x-node_diam*2 + offset_x, y + offset_y, 
                     x-node_diam/2 + offset_x, y + offset_y);
@@ -699,6 +738,7 @@ public class Visualizer extends JPanel {
             
             // Если переход к самому себе
             if (from.equals(to)) {
+                g.setColor(conn.getColor());
                 drawLoop(g, from_x+offset_x, from_y+offset_y, weight);
                 continue;
             }
@@ -712,16 +752,18 @@ public class Visualizer extends JPanel {
                 int y2 = to_y + offset_y;
                 
                 // Отрисовка кривой со стрелкой
+                g.setColor(conn.getColor());
                 drawArcArrow(g, x1, y1, x2, y2);
                 
                 // Подпись к кривой
                 double alpha = atan2((to_y - from_y), (to_x - from_x));
-                int x1_w = (int)(x1 + sin(alpha) * node_diam*2);
-                int y1_w = (int)(y1 - cos(alpha) * node_diam*2);
-                int x2_w = (int)(x2 + sin(alpha) * node_diam*2);
-                int y2_w = (int)(y2 - cos(alpha) * node_diam*2);
+                int x1_w = (int)(x1 + sin(alpha) * node_diam * arc_scale / 2);
+                int y1_w = (int)(y1 - cos(alpha) * node_diam * arc_scale / 2);
+                int x2_w = (int)(x2 + sin(alpha) * node_diam * arc_scale / 2);
+                int y2_w = (int)(y2 - cos(alpha) * node_diam * arc_scale / 2);
                 
                 // Отрисовка подписи
+                g.setColor(Color.BLACK);
                 drawConnLetter(weight, g, x1_w, y1_w, x2_w, y2_w);
             }
             else {
@@ -737,8 +779,10 @@ public class Visualizer extends JPanel {
                 int y2 = to_y - dimin_y + offset_y;
                 
                 // Стрелка
+                g.setColor(conn.getColor());
                 drawArrow(g, x1, y1, x2, y2);
                 // Подпись к стрелке
+                g.setColor(Color.BLACK);
                 drawConnLetter(weight, g, x1, y1, x2, y2);
             }
         }

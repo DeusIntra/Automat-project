@@ -15,6 +15,9 @@ public class Automat extends JFrame {
     ViewSettingsDialog view_settings;
     private final GRMenu menu;
     private final Visualizer vis;
+    private final JPanel colorChoose;
+    private final JLabel outputLabel;
+    private final JLabel colorLabel;
 //    private final JLabel offsetLabel;
     private final JTextField letterSetter;
     private final JButton getRegularBtn;
@@ -34,12 +37,15 @@ public class Automat extends JFrame {
     7 - Выбрать входной узел
     8 - Флаг распознавания (выход)
     9 - Перемещение по полю
+    10 - Выбор цвета узла или перехода
     */
     private byte mode;
     
     public Automat() {
+        JFrame f = this;
         mode = 0;
         
+        // Элементы выпадающего меню
         copy = new JMenuItem("Копировать");
         copy.addActionListener(new ActionListener() {
             @Override
@@ -77,11 +83,14 @@ public class Automat extends JFrame {
                         vis.setSize(contentPaneWidth - 160, contentPaneHeight - 120);
                         getRegularBtn.setLocation(20, contentPaneHeight - 40);
                         getRegularTF.setBounds(140, contentPaneHeight - 40, contentPaneWidth - 160, 20);
+                        outputLabel.setLocation(20, contentPaneHeight - 80);
 
                     }
                     else {
-                        vis.setSize(contentPaneWidth - 160, vis.getHeight());
+                        vis.setSize(contentPaneWidth - 160, 300);
                         getRegularTF.setSize(contentPaneWidth - 160, 20);
+                        getRegularBtn.setLocation(20, 380);
+                        outputLabel.setLocation(20, 340);
                     }
                 }
                 else {
@@ -89,11 +98,13 @@ public class Automat extends JFrame {
                         vis.setSize(vis.getWidth(), contentPaneHeight - 120);
                         getRegularBtn.setLocation(20, contentPaneHeight - 40);
                         getRegularTF.setLocation(140, contentPaneHeight - 40);
+                        outputLabel.setLocation(20, contentPaneHeight - 80);
                     }
                     else {
                         vis.setSize(300, 300);
                         getRegularBtn.setLocation(20, 380);
                         getRegularTF.setBounds(140, 380, 300, 20);
+                        outputLabel.setLocation(20, 340);
                     }
                 }
             }
@@ -120,7 +131,6 @@ public class Automat extends JFrame {
             JButton button = bp.buttons.get(i);
             button.addActionListener(new ButtonMode(i+1));
         }
-        bp.setBackground(Color.red);
         add(bp);
         
         // Строка перехода
@@ -128,6 +138,25 @@ public class Automat extends JFrame {
         letterSetter.setBounds(20, 20 + bp.height() + 20, 100, 20);
         letterSetter.setText("a");
         add(letterSetter);
+        
+        // Надпись выбора цвета
+        colorLabel = new JLabel("Выбрать цвет:");
+        colorLabel.setBounds(20, 80 + bp.height(), 100, 20);
+        add(colorLabel);
+        
+        // Выбор цвета
+        colorChoose = new JPanel();
+        colorChoose.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        colorChoose.setBounds(20, 100 + bp.height(), 30, 30);
+        colorChoose.setBackground(Color.RED);
+        colorChoose.addMouseListener(new MouseAdapter(){
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                Color color = JColorChooser.showDialog(f, "Выбор цвета", colorChoose.getBackground());
+                colorChoose.setBackground(color);
+            }
+        });
+        add(colorChoose);
         
 //        // Надпись, показывающая смещение
 //        offsetLabel = new JLabel("Offset: 0 0");
@@ -138,7 +167,7 @@ public class Automat extends JFrame {
         vis = new Visualizer(10);
         vis.setBounds(140, 20, contentPaneWidth - 160, contentPaneHeight - 120);
         vis.setBackground(Color.WHITE);
-        vis.setBorder(BorderFactory.createLineBorder(Color.black));
+        vis.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         VisMouseListener listener = new VisMouseListener();
         vis.addMouseListener(listener);
         vis.addMouseMotionListener(listener);
@@ -152,14 +181,16 @@ public class Automat extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 try {
                     getRegularTF.setText(vis.getRegular());
+                    outputLabel.setText("Регулярное выражение получено");
                 }
-                catch (RuntimeException ex) {System.out.println(contentPaneWidth + " " + contentPaneHeight);}
+                catch (RuntimeException ex) {
+                    outputLabel.setText("Ошибка: не указан вход или выход");
+                }
             }
         });
         add(getRegularBtn);
         
         // Поле вывода регулярного выражения
-        JFrame f = this;
         getRegularTF = new JTextField();
         getRegularTF.setEditable(false);
         getRegularTF.setBackground(Color.WHITE);
@@ -172,6 +203,10 @@ public class Automat extends JFrame {
             }
         });
         add(getRegularTF);
+        
+        outputLabel = new JLabel();
+        outputLabel.setBounds(20, contentPaneHeight - 80, contentPaneWidth - 40, 20);
+        add(outputLabel);
 
     }
     
@@ -217,6 +252,10 @@ public class Automat extends JFrame {
                     vis.setOffset(old_offset_x, old_offset_y);
                     vis.repaint();
 //                    offsetLabel.setText("Offset: 0 0");
+                    break;
+                case 10: // Установка цвета узла
+                    setNodeColor(e);
+                    break;
                 default:
                     break;
             }
@@ -239,10 +278,13 @@ public class Automat extends JFrame {
                     addArrow(e);
                     break;
                 case 6: // Удаление соединения
-                    removeFrom(e);
+                    vis.chooseActiveNode(e.getX(), e.getY());
                     break;
                 case 9: // Инициализация смещения
                     getOldCoords(e);
+                    break;
+                case 10: // Покраска перехода
+                    vis.chooseActiveNode(e.getX(), e.getY());
                     break;
                 default:
                     break;
@@ -285,6 +327,9 @@ public class Automat extends JFrame {
                 case 9:
                     setOffset(e);
                     saveOffset(e);
+                    break;
+                case 10: // Покраска перехода
+                    setConnColor(e);
                     break;
                 default:
                     break;
@@ -342,12 +387,6 @@ public class Automat extends JFrame {
             vis.repaint();
         }
         
-        private void removeFrom(MouseEvent e) {
-            int x = e.getX();
-            int y = e.getY();
-            vis.removeFrom(x, y);
-        }
-        
         private void removeTo(MouseEvent e) {
             int x = e.getX();
             int y = e.getY();
@@ -393,6 +432,22 @@ public class Automat extends JFrame {
             
             old_offset_x += new_x - old_x;
             old_offset_y += new_y - old_y;
+        }
+        
+        private void setNodeColor(MouseEvent e) {
+            int x = e.getX();
+            int y = e.getY();
+            Color color = colorChoose.getBackground();
+            vis.setNodeColor(color, x, y);
+            vis.repaint();
+        }
+        
+        private void setConnColor(MouseEvent e) {
+            int x = e.getX();
+            int y = e.getY();
+            Color color = colorChoose.getBackground();
+            vis.setConnColor(color, x, y);
+            vis.repaint();
         }
         
         // Проверка и исправление введенной строки

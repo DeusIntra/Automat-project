@@ -43,9 +43,8 @@ public class Automat extends JFrame {
     private byte mode;
     
     public Automat() {
-        JFrame f = this;
-        mode = 0;
-        
+        JFrame this_frame = this;
+        mode = 0;        
         
         // Элементы выпадающего меню
         copy = new JMenuItem("Копировать");
@@ -123,7 +122,7 @@ public class Automat extends JFrame {
         menu.choose_font.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                int result = fontChooser.showDialog(f);
+                int result = fontChooser.showDialog(this_frame);
                 if (result == JFontChooser.OK_OPTION) {
                     Font font = fontChooser.getSelectedFont();
                     graph.setLetterFont(font);
@@ -168,7 +167,7 @@ public class Automat extends JFrame {
         colorChoose.addMouseListener(new MouseAdapter(){
             @Override
             public void mouseClicked(MouseEvent e) {
-                Color color = JColorChooser.showDialog(f, "Выбор цвета", colorChoose.getBackground());
+                Color color = JColorChooser.showDialog(this_frame, "Выбор цвета", colorChoose.getBackground());
                 colorChoose.setBackground(color);
             }
         });
@@ -215,7 +214,7 @@ public class Automat extends JFrame {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getButton() != 3) return;                
-                popupMenu.show(f, e.getX()+145, e.getY()+555);
+                popupMenu.show(this_frame, e.getX()+145, e.getY()+555);
             }
         });
         add(getRegularTF);

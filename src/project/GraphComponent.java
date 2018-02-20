@@ -24,11 +24,14 @@ public class GraphComponent extends JPanel {
     private int current_elem_index;             // Индекс активного элемента
     private int enter_index;                    // Индекс узла, являющегося входом
     private int offset_x, offset_y;             // Отклонение для перемещения вида
+    private int net_scale;                      // Размер сетки
+    private Color net_color;                    // Цвет сетки
     private Font font;                          // Шрифт
     private FontMetrics font_metrics;           // Размеры шрифта
     private String letter;                      // Строка для переходов
     private Point current_arrow;                // Конечная точка активного перехода
     public boolean show_net;                    // Нужно ли показывать сетку
+    public boolean show_name;                   // Нужно ли показывать имя узла
     
     public GraphComponent(int diam) {
         nodes = new ArrayList<>();
@@ -39,10 +42,14 @@ public class GraphComponent extends JPanel {
         enter_index = -1;
         offset_x = 0;
         offset_y = 0;
+        net_scale = 80;
+        net_color = new Color(0, 0, 0, (float)0.05);
         font = new Font(Font.SANS_SERIF, Font.PLAIN, 14);
         letter = "";
         current_arrow = null;
         arc_scale = 3;
+        show_net = true;
+        show_name = false;
     }
     
     // Добавляет узел
@@ -129,7 +136,8 @@ public class GraphComponent extends JPanel {
                     Connection conn = connections.get(i);
                     Node from = conn.getFrom();
                     Node to = conn.getTo();
-                    if (from == node && conn.getWeight().equals(letter)) {
+                    char firstChar = conn.getWeight().charAt(0);
+                    if (from == node && firstChar == letter.charAt(0)) {
                         if (conn.has_reverse) {
                             for (Connection rev : connections) {
                                 if (rev.has_reverse)
@@ -173,7 +181,8 @@ public class GraphComponent extends JPanel {
                 Connection conn = connections.get(i);
                 Node from = conn.getFrom();
                 Node to = conn.getTo();
-                if (from == node && conn.getWeight().equals(letter)) {
+                char firstChar = conn.getWeight().charAt(0);
+                if (from == node && firstChar == letter.charAt(0)) {
                     if (conn.has_reverse) {
                         for (Connection rev : connections) {
                             if (rev.has_reverse)
@@ -321,8 +330,7 @@ public class GraphComponent extends JPanel {
                 Connection conn = new Connection(node, exit, "()");
                 conns_copy.add(conn);
             }
-        }
-        
+        }        
         
         // Если вход или выход не найден
         if (enter == null) throw new RuntimeException();
@@ -330,11 +338,6 @@ public class GraphComponent extends JPanel {
         
         // Пока не останутся только входной и выходной узлы
         while (nodes_copy.size() > 1) {
-            
-            // Тест
-            for (Connection conn : conns_copy) {
-                System.out.println(conn.getFrom() + " > " + conn.getWeight() + " > " + conn.getTo());
-            }
             
             // Выбрать узел для удаления
             Node node_to_remove = null;
@@ -364,9 +367,6 @@ public class GraphComponent extends JPanel {
                 }
             }
             
-            // Тест
-            System.out.println("Node to remove: " + node_to_remove);
-            
             // Соединить каждый вход с каждым выходом
             // Для этого необходимо создать массивы всех входов и всех выходов
             ArrayList<Connection> enters = new ArrayList<>();
@@ -393,22 +393,7 @@ public class GraphComponent extends JPanel {
                 }                    
             }
             
-            // Тест
-            System.out.println("Enters:");
-            for (Connection conn : enters) {
-                System.out.println(conn.getFrom());
-            }
-            System.out.println("Exits:");
-            for (Connection conn : exits) {
-                System.out.println(conn.getTo());
-            }
-            System.out.println("Conns to remove:");
-            for (Connection conn : conns_to_remove) {
-                System.out.println(conn.getFrom() + " > " + conn.getTo());
-            }
-            
             // Соединение каждого входа с каждым выходом
-            // Здесь ошибка ?
             for (int i = 0; i < exits.size(); i++) {
                 for (int j = 0; j < enters.size(); j++) {
                     Connection conn_from = enters.get(j);
@@ -426,8 +411,6 @@ public class GraphComponent extends JPanel {
                                  conn_to.getWeight();
                     
                     Connection conn = new Connection(from, to, weight);
-                    // Тест
-                    System.out.println("added from: " + from + " to: " + to);
                     conns_copy.add(conn);
                 }
             }
@@ -479,10 +462,6 @@ public class GraphComponent extends JPanel {
             }
             
         } // Конец while
-        
-        for (Connection conn : conns_copy) {
-            System.out.println(conn.getFrom() + " > " + conn.getWeight() + " > " + conn.getTo());
-        }
         
         // После всех манипуляций должно остаться 2 узла (вход и выход) и 1 или 2 соединения
         String regular;
@@ -684,6 +663,22 @@ public class GraphComponent extends JPanel {
         font_metrics = g.getFontMetrics(font);
         
         super.paintComponent(g); // Рисует панель
+        
+        // Отрисовка сетки
+        if (show_net) {
+            int net_offset_x = offset_x % net_scale;
+            int net_offset_y = offset_y % net_scale;
+            
+            int this_width = this.getBounds().width;
+            int this_height = this.getBounds().height;
+            
+            g.setColor(net_color);
+            for (int x = net_offset_x; x < this_width; x += net_scale)
+                g.drawLine(x, 0, x, this_height);
+            for (int y = net_offset_y; y < this_height; y += net_scale)
+                g.drawLine(0, y, this_width, y);
+            
+        }
         
         // Рисует все узлы
         Node node;

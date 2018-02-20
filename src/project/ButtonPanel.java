@@ -41,7 +41,7 @@ public class ButtonPanel extends JPanel {
         buttons.get(6).setToolTipText("Выбрать вход");
         buttons.get(7).setToolTipText("Установить выход");
         buttons.get(8).setToolTipText("Перемещение по полотну");
-        buttons.get(8).setToolTipText("Установить цвет вершины");
+        buttons.get(9).setToolTipText("Установить цвет вершины");
     }
     
     public int height() {

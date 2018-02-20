@@ -8,7 +8,8 @@ import javax.swing.*;
 public class GRMenu extends JMenuBar {
     
     private final JMenu file, view;
-    public JMenuItem exit, view_settings;
+    public JMenuItem exit, choose_font, view_settings;
+    private final JMenuItem empty; // Пустое поле
     
     public GRMenu(final JFrame f) {
         file = new JMenu("File");
@@ -22,13 +23,17 @@ public class GRMenu extends JMenuBar {
             }
         });
         
-        view_settings = new JMenuItem("Настройки рисования");
+        empty = new JMenuItem();
+        choose_font = new JMenuItem("Выбрать шрифт");
+        view_settings = new JMenuItem("Настройки отображения");
         
         // Меню "File"
+        file.add(empty);
         file.add(exit);
         add(file);
         
         // Меню "View"
+        view.add(choose_font);
         view.add(view_settings);
         add(view);
     }

@@ -14,7 +14,7 @@ public class Automat extends JFrame {
     
     ViewSettingsDialog view_settings;
     private final GRMenu menu;
-    private final Visualizer vis;
+    private final GraphComponent graph;
     private final JPanel colorChoose;
     private final JLabel outputLabel;
     private final JLabel colorLabel;
@@ -25,6 +25,7 @@ public class Automat extends JFrame {
     private final JMenuItem copy;
     private final JMenuItem copy_selected;
     private final JPopupMenu popupMenu;
+    private final JFontChooser fontChooser;
     
     /*
     0 - Ничего
@@ -44,6 +45,7 @@ public class Automat extends JFrame {
     public Automat() {
         JFrame f = this;
         mode = 0;
+        
         
         // Элементы выпадающего меню
         copy = new JMenuItem("Копировать");
@@ -80,14 +82,14 @@ public class Automat extends JFrame {
                 
                 if (contentPaneWidth - 160 > 300) {
                     if (contentPaneHeight - 120 > 300) {
-                        vis.setSize(contentPaneWidth - 160, contentPaneHeight - 120);
+                        graph.setSize(contentPaneWidth - 160, contentPaneHeight - 120);
                         getRegularBtn.setLocation(20, contentPaneHeight - 40);
                         getRegularTF.setBounds(140, contentPaneHeight - 40, contentPaneWidth - 160, 20);
                         outputLabel.setLocation(20, contentPaneHeight - 80);
 
                     }
                     else {
-                        vis.setSize(contentPaneWidth - 160, 300);
+                        graph.setSize(contentPaneWidth - 160, 300);
                         getRegularTF.setSize(contentPaneWidth - 160, 20);
                         getRegularBtn.setLocation(20, 380);
                         outputLabel.setLocation(20, 340);
@@ -95,13 +97,13 @@ public class Automat extends JFrame {
                 }
                 else {
                     if (contentPaneHeight - 120 > 300) {
-                        vis.setSize(vis.getWidth(), contentPaneHeight - 120);
+                        graph.setSize(graph.getWidth(), contentPaneHeight - 120);
                         getRegularBtn.setLocation(20, contentPaneHeight - 40);
                         getRegularTF.setLocation(140, contentPaneHeight - 40);
                         outputLabel.setLocation(20, contentPaneHeight - 80);
                     }
                     else {
-                        vis.setSize(300, 300);
+                        graph.setSize(300, 300);
                         getRegularBtn.setLocation(20, 380);
                         getRegularTF.setBounds(140, 380, 300, 20);
                         outputLabel.setLocation(20, 340);
@@ -110,11 +112,25 @@ public class Automat extends JFrame {
             }
         });
         
-        // Окно настроек вида
-        view_settings = new ViewSettingsDialog(this, "Настройки вида");
+        // Диалоговое окно выбора шрифта, любезно предоставленное Masahiko SAWAI
+        fontChooser = new JFontChooser();
+        
+        // Диалоговое окно настроек вида
+        view_settings = new ViewSettingsDialog(this, "Настройки отображения");
         
         // Меню
         menu = new GRMenu(this);
+        menu.choose_font.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int result = fontChooser.showDialog(f);
+                if (result == JFontChooser.OK_OPTION) {
+                    Font font = fontChooser.getSelectedFont();
+                    graph.setLetterFont(font);
+                    graph.repaint();
+                } 
+            }            
+        });
         menu.view_settings.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -164,14 +180,14 @@ public class Automat extends JFrame {
 //        add(offsetLabel);        
         
         // Настройка панели
-        vis = new Visualizer(10);
-        vis.setBounds(140, 20, contentPaneWidth - 160, contentPaneHeight - 120);
-        vis.setBackground(Color.WHITE);
-        vis.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        graph = new GraphComponent(10);
+        graph.setBounds(140, 20, contentPaneWidth - 160, contentPaneHeight - 120);
+        graph.setBackground(Color.WHITE);
+        graph.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         VisMouseListener listener = new VisMouseListener();
-        vis.addMouseListener(listener);
-        vis.addMouseMotionListener(listener);
-        add(vis);
+        graph.addMouseListener(listener);
+        graph.addMouseMotionListener(listener);
+        add(graph);
         
         // Кнопка получения регулярного выражения
         getRegularBtn = new JButton("Получить");
@@ -180,7 +196,7 @@ public class Automat extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    getRegularTF.setText(vis.getRegular());
+                    getRegularTF.setText(graph.getRegular());
                     outputLabel.setText("Регулярное выражение получено");
                 }
                 catch (RuntimeException ex) {
@@ -219,45 +235,50 @@ public class Automat extends JFrame {
             // Принимает только клик левой кнопки мыши
             if(e.getButton() != 1) return;
             
-            int x = e.getX();
-            int y = e.getY();
-            
-            switch(mode) {
-                case 1: // Добавление узла
-                    vis.addElem(x, y);
-                    vis.repaint();
-                    break;
-                case 2: // Удаление узла
-                    vis.removeElem(x, y);
-                    vis.repaint();
-                    break;
-                case 3: // Перемещение узла
-                    updateNode(e);
-                    break;
-                case 5: // Добавление петли
-                    addLoop(e);
-                    break;
-                case 6: // Убрать петлю
-                    removeLoop(e);
-                    break;
-                case 7: // Установка входа
-                    setEnter(e);
-                    break;
-                case 8: // Установка выхода
-                    setExit(e);
-                    break;
-                case 9: // Установка смещения в начальное положение
-                    old_offset_x = 0;
-                    old_offset_y = 0;
-                    vis.setOffset(old_offset_x, old_offset_y);
-                    vis.repaint();
-//                    offsetLabel.setText("Offset: 0 0");
-                    break;
-                case 10: // Установка цвета узла
-                    setNodeColor(e);
-                    break;
-                default:
-                    break;
+            try {
+                int x = e.getX();
+                int y = e.getY();
+
+                switch(mode) {
+                    case 1: // Добавление узла
+                        graph.addElem(x, y);
+                        graph.repaint();
+                        break;
+                    case 2: // Удаление узла
+                        graph.removeElem(x, y);
+                        graph.repaint();
+                        break;
+                    case 3: // Перемещение узла
+                        updateNode(e);
+                        break;
+                    case 5: // Добавление петли
+                        addLoop(e);
+                        break;
+                    case 6: // Убрать петлю
+                        removeLoop(e);
+                        break;
+                    case 7: // Установка входа
+                        setEnter(e);
+                        break;
+                    case 8: // Установка выхода
+                        setExit(e);
+                        break;
+                    case 9: // Установка смещения в начальное положение
+                        old_offset_x = 0;
+                        old_offset_y = 0;
+                        graph.setOffset(old_offset_x, old_offset_y);
+                        graph.repaint();
+    //                    offsetLabel.setText("Offset: 0 0");
+                        break;
+                    case 10: // Установка цвета узла
+                        setNodeColor(e);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            catch (Exception ex) {
+                outputLabel.setText(ex.getMessage());
             }
         }
         
@@ -267,147 +288,162 @@ public class Automat extends JFrame {
             // Принимает только нажатие левой кнопки мыши
             if(e.getButton() != 1) return;
             
-            switch(mode) {
-                case 3: // Перемещение узла
-                    updateNode(e);
-                    break;
-                case 4: // Добавление перехода
-                    String str = letterSetter.getText();
-                    str = checkInput(str);
-                    letterSetter.setText(str);
-                    addArrow(e);
-                    break;
-                case 6: // Удаление соединения
-                    vis.chooseActiveNode(e.getX(), e.getY());
-                    break;
-                case 9: // Инициализация смещения
-                    getOldCoords(e);
-                    break;
-                case 10: // Покраска перехода
-                    vis.chooseActiveNode(e.getX(), e.getY());
-                    break;
-                default:
-                    break;
+            try {
+                switch(mode) {
+                    case 3: // Перемещение узла
+                        updateNode(e);
+                        break;
+                    case 4: // Добавление перехода
+                        String str = letterSetter.getText();
+                        str = checkInput(str);
+                        letterSetter.setText(str);
+                        addArrow(e);
+                        break;
+                    case 6: // Удаление соединения
+                        graph.chooseActiveNode(e.getX(), e.getY());
+                        break;
+                    case 9: // Инициализация смещения
+                        getOldCoords(e);
+                        break;
+                    case 10: // Покраска перехода
+                        graph.chooseActiveNode(e.getX(), e.getY());
+                        break;
+                    default:
+                        break;
+                }
+            }
+            catch (Exception ex) {
+                outputLabel.setText(ex.getMessage());
             }
         }
         
         @Override
         public void mouseDragged(MouseEvent e) {
-
-            switch(mode) {
-                case 3: // Перемещение узла
-                    updateNode(e);
-                    break;
-                case 4: // Добавление перехода
-                    moveArrow(e);
-                    break;
-                case 6: // Удаление перехода
-                    break;
-                case 9:
-                    setOffset(e);
-                    break;
-                default:
-                    break;
+            
+            try {
+                switch(mode) {
+                    case 3: // Перемещение узла
+                        updateNode(e);
+                        break;
+                    case 4: // Добавление перехода
+                        moveArrow(e);
+                        break;
+                    case 6: // Удаление перехода
+                        break;
+                    case 9:
+                        setOffset(e);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            catch (Exception ex) {
+                outputLabel.setText(ex.getMessage());
             }
         }
         
         @Override
         public void mouseReleased(MouseEvent e) {
             
-            switch(mode) {
-                case 3: // Установка перемещаемого узла в выбранном положении
-                    fixNode(e);
-                    break;
-                case 4: // Установка перехода
-                    fixArrow(e);
-                    break;
-                case 6: // Удаление перехода
-                    removeTo(e);
-                    break;
-                case 9:
-                    setOffset(e);
-                    saveOffset(e);
-                    break;
-                case 10: // Покраска перехода
-                    setConnColor(e);
-                    break;
-                default:
-                    break;
+            try {
+                switch(mode) {
+                    case 3: // Установка перемещаемого узла в выбранном положении
+                        fixNode(e);
+                        break;
+                    case 4: // Установка перехода
+                        fixArrow(e);
+                        break;
+                    case 6: // Удаление перехода
+                        removeTo(e);
+                        break;
+                    case 9:
+                        setOffset(e);
+                        saveOffset(e);
+                        break;
+                    case 10: // Покраска перехода
+                        setConnColor(e);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            catch (Exception ex) {
+                outputLabel.setText(ex.getMessage());
             }
         }
         
         private void updateNode(MouseEvent e) {
             int x = e.getX();
             int y = e.getY();
-            vis.moveElem(x, y);
-            vis.repaint();
+            graph.moveElem(x, y);
+            graph.repaint();
         }
         
         private void fixNode(MouseEvent e) {
             int x = e.getX();
             int y = e.getY();
-            vis.fixElem(x, y);
-            vis.repaint();
+            graph.fixElem(x, y);
+            graph.repaint();
         }
         
         private void addArrow (MouseEvent e) {
             int x = e.getX();
             int y = e.getY();
-            vis.setLetter(letterSetter.getText());
-            vis.addArrow(x, y);
-            vis.repaint();
+            graph.setLetter(letterSetter.getText());
+            graph.addArrow(x, y);
+            graph.repaint();
         }
         
         private void moveArrow (MouseEvent e) {
             int x = e.getX();
             int y = e.getY();
-            vis.moveArrow(x, y);
-            vis.repaint();
+            graph.moveArrow(x, y);
+            graph.repaint();
         }
         
         private void fixArrow (MouseEvent e) {
             int x = e.getX();
             int y = e.getY();
-            vis.fixArrow(x, y);
-            vis.repaint();
+            graph.fixArrow(x, y);
+            graph.repaint();
         }
         
         private void addLoop(MouseEvent e) {
             int x = e.getX();
             int y = e.getY();
-            vis.setLetter(letterSetter.getText());
-            vis.addLoop(x, y);
-            vis.repaint();
+            graph.setLetter(letterSetter.getText());
+            graph.addLoop(x, y);
+            graph.repaint();
         }
         
         private void removeLoop(MouseEvent e) {
             int x = e.getX();
             int y = e.getY();
-            vis.removeLoop(x, y);
-            vis.repaint();
+            graph.removeLoop(x, y);
+            graph.repaint();
         }
         
         private void removeTo(MouseEvent e) {
             int x = e.getX();
             int y = e.getY();
-            vis.removeTo(x, y);
-            vis.repaint();
+            graph.removeTo(x, y);
+            graph.repaint();
         }
         
         private void setEnter(MouseEvent e) {
             int x = e.getX();
             int y = e.getY();
             
-            vis.setEnter(x, y);
-            vis.repaint();
+            graph.setEnter(x, y);
+            graph.repaint();
         }
         
         private void setExit(MouseEvent e) {
             int x = e.getX();
             int y = e.getY();
             
-            vis.setExit(x, y);
-            vis.repaint();
+            graph.setExit(x, y);
+            graph.repaint();
         }
         
         private void getOldCoords(MouseEvent e) {
@@ -421,8 +457,8 @@ public class Automat extends JFrame {
             
             int offset_x = new_x - old_x + old_offset_x;
             int offset_y = new_y - old_y + old_offset_y;
-            vis.setOffset(offset_x, offset_y);
-            vis.repaint();
+            graph.setOffset(offset_x, offset_y);
+            graph.repaint();
 //            offsetLabel.setText("Offset: " + vis.getOffset());
         }
         
@@ -438,16 +474,16 @@ public class Automat extends JFrame {
             int x = e.getX();
             int y = e.getY();
             Color color = colorChoose.getBackground();
-            vis.setNodeColor(color, x, y);
-            vis.repaint();
+            graph.setNodeColor(color, x, y);
+            graph.repaint();
         }
         
         private void setConnColor(MouseEvent e) {
             int x = e.getX();
             int y = e.getY();
             Color color = colorChoose.getBackground();
-            vis.setConnColor(color, x, y);
-            vis.repaint();
+            graph.setConnColor(color, x, y);
+            graph.repaint();
         }
         
         // Проверка и исправление введенной строки

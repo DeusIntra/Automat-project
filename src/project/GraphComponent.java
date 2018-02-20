@@ -14,7 +14,7 @@ import static java.lang.Math.hypot;
 import static java.lang.Math.pow;
 
 
-public class Visualizer extends JPanel {
+public class GraphComponent extends JPanel {
     
     private final ArrayList<Node> nodes;        // Расширяемый массив узлов
     private final ArrayList<Connection> connections;  // Массив переходов
@@ -24,14 +24,13 @@ public class Visualizer extends JPanel {
     private int current_elem_index;             // Индекс активного элемента
     private int enter_index;                    // Индекс узла, являющегося входом
     private int offset_x, offset_y;             // Отклонение для перемещения вида
-    private int font_size;                      // Кегель шрифта
     private Font font;                          // Шрифт
     private FontMetrics font_metrics;           // Размеры шрифта
     private String letter;                      // Строка для переходов
     private Point current_arrow;                // Конечная точка активного перехода
     public boolean show_net;                    // Нужно ли показывать сетку
     
-    public Visualizer(int diam) {
+    public GraphComponent(int diam) {
         nodes = new ArrayList<>();
         connections = new ArrayList<>();
         node_diam = diam;
@@ -40,8 +39,7 @@ public class Visualizer extends JPanel {
         enter_index = -1;
         offset_x = 0;
         offset_y = 0;
-        font_size = 14;
-        font = new Font(Font.SANS_SERIF, Font.PLAIN, font_size);
+        font = new Font(Font.SANS_SERIF, Font.PLAIN, 14);
         letter = "";
         current_arrow = null;
         arc_scale = 3;

@@ -16,7 +16,7 @@ public class Node {
         this.y = y;
         enter = false;
         exit = false;
-        color = Color.BLACK;
+        color = Color.WHITE;
     }
     
     public int getX() {

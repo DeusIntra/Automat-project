@@ -12,10 +12,10 @@ public class GRMenu extends JMenuBar {
     private final JMenuItem empty; // Пустое поле
     
     public GRMenu(final JFrame f) {
-        file = new JMenu("File");
-        view = new JMenu("View");
+        file = new JMenu("Файл");
+        view = new JMenu("Вид");
         
-        exit = new JMenuItem("Exit");
+        exit = new JMenuItem("Выход");
         exit.addActionListener(new ActionListener() {           
             @Override
             public void actionPerformed(ActionEvent e) {

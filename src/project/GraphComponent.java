@@ -19,8 +19,8 @@ public class GraphComponent extends JPanel {
     private final ArrayList<Node> nodes;        // Расширяемый массив узлов
     private final ArrayList<Connection> connections;  // Массив переходов
     private int node_diam;                      // Диаметр узлов
-    public double min_dist;                     // Минимальное расстояние между узлами
-    private double arc_scale;
+    private int min_dist;                       // Минимальное расстояние между узлами
+    private double arc_scale;                   // Высота дуги
     private int current_elem_index;             // Индекс активного элемента
     private int enter_index;                    // Индекс узла, являющегося входом
     private int offset_x, offset_y;             // Отклонение для перемещения вида
@@ -33,11 +33,11 @@ public class GraphComponent extends JPanel {
     public boolean show_net;                    // Нужно ли показывать сетку
     public boolean show_name;                   // Нужно ли показывать имя узла
     
-    public GraphComponent(int diam) {
+    public GraphComponent() {
         nodes = new ArrayList<>();
         connections = new ArrayList<>();
-        node_diam = diam;
-        min_dist = node_diam * 1.5;
+        node_diam = 10;
+        min_dist = node_diam * 2;
         current_elem_index = -1;
         enter_index = -1;
         offset_x = 0;
@@ -50,6 +50,9 @@ public class GraphComponent extends JPanel {
         arc_scale = 3;
         show_net = true;
         show_name = false;
+        
+        setBackground(Color.WHITE);
+        setBorder(BorderFactory.createLineBorder(Color.BLACK));
     }
     
     // Добавляет узел
@@ -544,15 +547,21 @@ public class GraphComponent extends JPanel {
         int arc_width = (int)hypot((x2 - x1), (y2 - y1));
         int arc_height = (int) (node_diam * arc_scale);
         
+        // Углы начала и конца дуги
+        double arc_angle_1 = Math.toRadians(30 + (node_diam - 10)/2);
+        double arc_angle_2 = Math.toRadians(120 - (node_diam - 10));
+        
         // Центральная точка эллипса, на котором рисуется дуга
         int oval_mid_x = x1 + arc_width / 2;
         int oval_mid_y = y1;
         
         // Точка, через которую проходит касательная
-        int tan_x = (int) (oval_mid_x + cos(PI/6) * arc_width/2);
-        int tan_y = (int) (oval_mid_y - sin(PI/6) * arc_height/2);
+        int tan_x = (int) (oval_mid_x + cos(arc_angle_1) * arc_width/2);
+        int tan_y = (int) (oval_mid_y - sin(arc_angle_1) * arc_height/2);
         
         // Найти угол касательной
+        if (tan_y == 0) tan_y = 1; // Дабы избежать деления на ноль
+        if (tan_x == 0) tan_x = 1;
         double k = -(pow(arc_height, 2) / pow(arc_width, 2)) * (tan_x/tan_y);
         double ang = atan(k);
         
@@ -563,7 +572,7 @@ public class GraphComponent extends JPanel {
         // Поворот на нужный угол вокруг точки (x1, y1)
         g2d.rotate(-alpha+PI/2, x1, y1);
         // Сама дуга
-        g2d.drawArc(x1, y1-arc_height/2, arc_width, arc_height, 30, 120);
+        g2d.drawArc(x1, y1-arc_height/2, arc_width, arc_height, (int)Math.toDegrees(arc_angle_1), (int)Math.toDegrees(arc_angle_2));
         // "Крылья" стрелки, лежащей на касательной
         g2d.drawLine(tan_x, tan_y, (int) (tan_x-cos(ang + PI/6)*7), (int) (tan_y+sin(ang + PI/6)*7));
         g2d.drawLine(tan_x, tan_y, (int) (tan_x-cos(ang - PI/3)*7), (int) (tan_y+sin(ang - PI/3)*7));
@@ -655,6 +664,24 @@ public class GraphComponent extends JPanel {
         font = f;
     }
     
+    // Устанавливает цвет сетки
+    public void setNetColor(Color color) {
+        net_color = color;
+    }
+    
+    public void setNodeDiam(int diam) {
+        node_diam = diam;
+        min_dist = node_diam * 2;
+    }
+    
+    public void setArcHeight(double scale) {
+        arc_scale = scale;
+    }
+    
+    public void setNetSize(int size) {
+        net_scale = size;
+    }
+    
     @Override
     public void paintComponent(Graphics g) {
         
@@ -696,14 +723,14 @@ public class GraphComponent extends JPanel {
             
             // Отрисовка узла
             g.setColor(node.getColor());
+            g.fillOval(x_top_left, y_top_left, node_diam, node_diam);
+            g.setColor(Color.BLACK);
             g.drawOval(x_top_left, y_top_left, node_diam, node_diam);
-            
             // Отрисовка выходов
             if (node.exit)
                 drawArrow(g, 
                         x + offset_x, y-node_diam/2 + offset_y, 
                         x + offset_x, y-node_diam*2 + offset_y);
-//            g.setColor(Color.BLACK);
         }
         
         // Отрисовка входа
@@ -789,20 +816,26 @@ public class GraphComponent extends JPanel {
             int to_x = current_arrow.x;
             int to_y = current_arrow.y;
             
-            // Чтобы линия начиналась не из центра
-            double alpha = atan2((to_x - from_x), (to_y - from_y));
-            int dimin_x = (int)(sin(alpha) * node_diam);
-            int dimin_y = (int)(cos(alpha) * node_diam);
-            
-            int x1 = from_x + dimin_x + offset_x;
-            int y1 = from_y + dimin_y + offset_y;
-            int x2 = to_x - dimin_x + offset_x;
-            int y2 = to_y - dimin_y + offset_y;
-            
-            // Отрисовка активной стрелки
-            drawArrow(g, x1, y1, x2, y2);
-            // Подпись к активной стрелке
-            drawConnLetter(letter, g, x1, y1, x2, y2);
+            // Если расстояние меньше двух диаметров, 
+            // стелка будет смотреть в обратном направлении,
+            // поэтому нет смысла её рисовать
+            double distance = hypot(to_x - from_x, to_y - from_y);
+            if (distance >= min_dist) {        
+                // Чтобы линия начиналась не из центра
+                double alpha = atan2((to_x - from_x), (to_y - from_y));
+                int dimin_x = (int)(sin(alpha) * node_diam);
+                int dimin_y = (int)(cos(alpha) * node_diam);
+
+                int x1 = from_x + dimin_x + offset_x;
+                int y1 = from_y + dimin_y + offset_y;
+                int x2 = to_x - dimin_x + offset_x;
+                int y2 = to_y - dimin_y + offset_y;
+
+                // Отрисовка активной стрелки
+                drawArrow(g, x1, y1, x2, y2);
+                // Подпись к активной стрелке
+                drawConnLetter(letter, g, x1, y1, x2, y2);
+            }
         }
     }
 }

@@ -12,13 +12,12 @@ public class Automat extends JFrame {
     private int contentPaneWidth;
     private int contentPaneHeight;    
     
-    ViewSettingsDialog view_settings;
+    ViewSettingsDialog view_settings_dialog;
     private final GRMenu menu;
     private final GraphComponent graph;
     private final JPanel colorChoose;
     private final JLabel outputLabel;
     private final JLabel colorLabel;
-//    private final JLabel offsetLabel;
     private final JTextField letterSetter;
     private final JButton getRegularBtn;
     private final JTextField getRegularTF;
@@ -43,7 +42,7 @@ public class Automat extends JFrame {
     private byte mode;
     
     public Automat() {
-        JFrame this_frame = this;
+        Automat this_frame = this;
         mode = 0;        
         
         // Элементы выпадающего меню
@@ -115,7 +114,7 @@ public class Automat extends JFrame {
         fontChooser = new JFontChooser();
         
         // Диалоговое окно настроек вида
-        view_settings = new ViewSettingsDialog(this, "Настройки отображения");
+        view_settings_dialog = new ViewSettingsDialog(this, "Настройки отображения");
         
         // Меню
         menu = new GRMenu(this);
@@ -127,14 +126,14 @@ public class Automat extends JFrame {
                     Font font = fontChooser.getSelectedFont();
                     graph.setLetterFont(font);
                     graph.repaint();
+                    view_settings_dialog.setGraphFont(font);
                 } 
             }            
         });
         menu.view_settings.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                view_settings.setVisible(true);
-                view_settings.reset();
+                view_settings_dialog.setVisible(true);
             }
         });
         setJMenuBar(menu);
@@ -171,18 +170,11 @@ public class Automat extends JFrame {
                 colorChoose.setBackground(color);
             }
         });
-        add(colorChoose);
-        
-//        // Надпись, показывающая смещение
-//        offsetLabel = new JLabel("Offset: 0 0");
-//        offsetLabel.setBounds(20, 350, 200, 20);
-//        add(offsetLabel);        
+        add(colorChoose);     
         
         // Настройка панели
-        graph = new GraphComponent(10);
+        graph = new GraphComponent();
         graph.setBounds(140, 20, contentPaneWidth - 160, contentPaneHeight - 120);
-        graph.setBackground(Color.WHITE);
-        graph.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         VisMouseListener listener = new VisMouseListener();
         graph.addMouseListener(listener);
         graph.addMouseMotionListener(listener);
@@ -223,6 +215,19 @@ public class Automat extends JFrame {
         outputLabel.setBounds(20, contentPaneHeight - 80, contentPaneWidth - 40, 20);
         add(outputLabel);
 
+    }
+
+    // Вызывается после закрытия диалога настройки отображения
+    public void updateGraph(int node_diam, double arc_height,
+                            boolean show_name, boolean show_net,
+                            int net_size, Color net_color) {
+        graph.setNodeDiam(node_diam);
+        graph.setArcHeight(arc_height);
+        graph.show_name = show_name;
+        graph.show_net = show_net;
+        graph.setNetSize(net_size);
+        graph.setNetColor(net_color);
+        graph.repaint();
     }
     
     private class VisMouseListener extends MouseInputAdapter {
@@ -580,6 +585,7 @@ public class Automat extends JFrame {
             
             return output.trim();
         }
+        
     }
     
     private class ButtonMode implements ActionListener {

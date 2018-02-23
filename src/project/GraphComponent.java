@@ -321,12 +321,6 @@ public class GraphComponent extends JPanel {
     public void setOffset(int offset_x, int offset_y) {
         this.offset_x = offset_x;
         this.offset_y = offset_y;
-//        System.out.println(uniteBrackets(letter));
-        
-//        printConns();
-        HashSet<Character> arr = firstChars(letter);
-        for (Character ch : arr) System.out.print(ch);
-        System.out.println();
     }
     
     public void setLetter(String s) {
@@ -1045,12 +1039,4 @@ public class GraphComponent extends JPanel {
         }
     }
     
-    private void printConns() {
-        for (Connection conn : connections) {
-            Node from = conn.getFrom();
-            Node to = conn.getTo();
-            System.out.println(from.getName() + " > " + conn.getWeight() + " > " + to.getName());
-        }
-        System.out.println("--------------------------------------");
-    }
 }

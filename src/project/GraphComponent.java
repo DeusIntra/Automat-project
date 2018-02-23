@@ -12,6 +12,7 @@ import static java.lang.Math.PI;
 import static java.lang.Math.atan;
 import static java.lang.Math.hypot;
 import static java.lang.Math.pow;
+import java.util.HashSet;
 import java.util.Stack;
 
 
@@ -108,7 +109,7 @@ public class GraphComponent extends JPanel {
         }
     }
     
-    // В режиме добавления соединения при нажатии кнопки мыши
+    // Добавляет активную стрелку по данным координатам
     public void addArrow(int x, int y) {
         chooseActiveNode(x, y);
         if (current_elem_index != -1 && letter.length() != 0) {
@@ -116,61 +117,76 @@ public class GraphComponent extends JPanel {
         }
     }
     
-    // В режиме добавления соединения при перемещении мыши
+    // Двигает активную стрелку
     public void moveArrow(int x, int y) {
         if (current_arrow != null) {
             current_arrow = new Point(x - offset_x, y - offset_y);
         }
     }
     
-    // В режиме добавления соединения при отпускании мыши
+    // Добавляет переход
     public void fixArrow(int x, int y) {
-        if (current_arrow != null) {
+        if (current_arrow == null) return;
             
-            // Если кнопка мыши была отпущена на существующем узле
-            int other_node_index = getElemIndexAt(x, y);
-            if (other_node_index != -1 && other_node_index != current_elem_index) {
-                Node node = nodes.get(current_elem_index);
-                Node other_node = nodes.get(other_node_index);
-                
-                // Проверка на существование второго такого же перехода к другому узлу,
-                // проверка на существование обратного перехода
-                boolean has_reverse = false;
-                for (int i = connections.size()-1; i >= 0; i--) {
-                    Connection conn = connections.get(i);
-                    Node from = conn.getFrom();
-                    Node to = conn.getTo();
-                    char firstChar = conn.getWeight().charAt(0);
-                    if (from == node && firstChar == letter.charAt(0)) {
-                        if (conn.has_reverse) {
+        int other_node_index = getElemIndexAt(x, y);
+        if (other_node_index == -1 || other_node_index == current_elem_index) return;
+        
+        // Если кнопка мыши была отпущена на существующем узле
+        Node node = nodes.get(current_elem_index);
+        Node other_node = nodes.get(other_node_index);
+
+        // Проверка соединений
+        boolean has_reverse = false;
+        HashSet<Character> letter_set = firstChars(letter);
+        for (int i = connections.size()-1; i >= 0; i--) {
+            Connection conn = connections.get(i);
+            Node from = conn.getFrom();
+            Node to = conn.getTo();
+            
+            // Если существует такое же соединение, убрать
+            if (from == node && to == other_node) {
+                connections.remove(i);
+            }
+            else {
+                if (from == node) {
+                    // Проверка пересечения возможных первых букв
+                    HashSet<Character> weight_set = firstChars(conn.getWeight());
+                    weight_set.retainAll(letter_set);
+                    // Если пересечение не пустое, автомат не будет детерминированным
+                    // поэтому необходимо удалить пересекающееся соединение
+                    if (!weight_set.isEmpty()) {
+                        if (conn.has_reverse) { // Проверка на наличие обратного соединения
                             for (Connection rev : connections) {
                                 if (rev.has_reverse)
-                                    // Работает - не трогай
+                                    // Моя маленькая пирамида смерти
                                     // Это эффективно, честно
                                     if (rev.getFrom() == to && rev.getTo() == from) {
+                                        // Больше не обратное, т.к. соединение будет удалено
                                         rev.has_reverse = false;
-                                        break;
-                                    }
+                                    break;
+                                }
                             }
                         }
                         connections.remove(i);
                     }
-                    if (node == to && other_node == from) {
-                        has_reverse = true;
-                        conn.has_reverse = true;
-                    }
                 }
-                
-                // Подключение к существующему узлу
-                Connection conn = new Connection(node, other_node, letter);
-                conn.has_reverse = has_reverse;
-                connections.add(conn);
+
             }
-            // Конец работы с активным узлом
-            current_elem_index = -1;
-            // Конец работы с активным переходом
-            current_arrow = null;
+            if (node == to && other_node == from) {
+                has_reverse = true;
+                conn.has_reverse = true;
+            }
         }
+
+        // Подключение к существующему узлу
+        Connection conn = new Connection(node, other_node, letter);
+        conn.has_reverse = has_reverse;
+        connections.add(conn);
+            
+        // Конец работы с активным узлом
+        current_elem_index = -1;
+        // Конец работы с активным переходом
+        current_arrow = null;
     }
     
     // Добавление соединения с самим собой
@@ -305,6 +321,12 @@ public class GraphComponent extends JPanel {
     public void setOffset(int offset_x, int offset_y) {
         this.offset_x = offset_x;
         this.offset_y = offset_y;
+//        System.out.println(uniteBrackets(letter));
+        
+//        printConns();
+        HashSet<Character> arr = firstChars(letter);
+        for (Character ch : arr) System.out.print(ch);
+        System.out.println();
     }
     
     public void setLetter(String s) {
@@ -567,7 +589,8 @@ public class GraphComponent extends JPanel {
         return regular;
     }
     
-    // Возвращает строку, в которой внешние скобки объединены в один символ
+    // Возвращает строку, в которой символы внутри внешних скобо заменены на "."
+    // Необходимо лишь для того, чтобы избавиться от "|" внутри скобок
     private String uniteBrackets(String str) {
         String out = "";
         Stack<Character> brackets = new Stack<>();
@@ -586,15 +609,18 @@ public class GraphComponent extends JPanel {
                 switch (ch) {
                     case '(':
                         brackets.push(ch);
+                        out += ".";
                         break;
                     case ')':
                         brackets.pop();
                         if (brackets.empty()) {
-                            out += ".)";
+                            out += ")";
                             in_brackets = false;
                         }
+                        else out += ".";
                         break;
                     default:
+                        out += ".";
                         break;
                 }
             }
@@ -602,6 +628,63 @@ public class GraphComponent extends JPanel {
         
         
         return out;
+    }
+    
+    // Возвращает множество всех возможных первых символов строки
+    private HashSet<Character> firstChars(String str) {
+        HashSet<Character> chars = new HashSet<>();
+        Stack<Character> brackets = new Stack<>();
+        boolean in_brackets = false;
+        String br_str = "";
+        String united_str = uniteBrackets(str);
+        
+        for (int i = 0; i < str.length(); i++) {
+            if (!in_brackets) { // Если внутри скобок
+                char ch = united_str.charAt(i);
+                if (i == 0) { // Если начало строки
+                    if (ch == '(') { // Начало скобки
+                        in_brackets = true;
+                        brackets.push(ch);
+                    }
+                    else chars.add(ch);
+                }
+                else { // Если не начало строки
+                    if (united_str.charAt(i-1) == '|') { // Если перед "|"
+                        if (ch == '(') { // Начало скобки
+                            in_brackets = true;
+                            brackets.push(ch);
+                        }
+                        else chars.add(ch);
+                    }
+                }
+            }
+            else { // Если внутри скобки, сохранение строки внутри скобки
+                char br_ch = str.charAt(i);
+                switch (br_ch) {
+                    case '(':
+                        br_str += br_ch;
+                        brackets.push(br_ch);
+                        break;
+                    case ')':
+                        brackets.pop();
+                        if (brackets.empty()) { // Конец внешней скобки
+                            // Немного рекурсии
+                            HashSet<Character> set = firstChars(br_str);
+                            // Добавление новых элементов к множеству
+                            for (char arr_ch : set) chars.add(arr_ch);
+                            in_brackets = false;
+                            br_str = "";
+                        }
+                        else br_str += br_ch;
+                        break;
+                    default:
+                        br_str += br_ch;
+                        break;
+                }
+            }
+        }
+        
+        return chars;
     }
     
     // Возвращает индекс элемента, внутри которого есть точка (x, y)
@@ -960,5 +1043,14 @@ public class GraphComponent extends JPanel {
                 drawConnLetter(letter, g, x1, y1, x2, y2);
             }
         }
+    }
+    
+    private void printConns() {
+        for (Connection conn : connections) {
+            Node from = conn.getFrom();
+            Node to = conn.getTo();
+            System.out.println(from.getName() + " > " + conn.getWeight() + " > " + to.getName());
+        }
+        System.out.println("--------------------------------------");
     }
 }

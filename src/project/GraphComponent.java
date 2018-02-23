@@ -229,7 +229,7 @@ public class GraphComponent extends JPanel {
         int index = getElemIndexAt(x, y);
         if (index != -1) {
             Node node = nodes.get(index);
-            for(int i = 0; i < connections.size(); i++) {
+            for(int i = connections.size()-1; i >= 0; i--) {
                 Connection conn = connections.get(i);
                 Node from = conn.getFrom();
                 Node to = conn.getTo();

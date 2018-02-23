@@ -12,6 +12,7 @@ import static java.lang.Math.PI;
 import static java.lang.Math.atan;
 import static java.lang.Math.hypot;
 import static java.lang.Math.pow;
+import java.util.Stack;
 
 
 public class GraphComponent extends JPanel {
@@ -405,13 +406,59 @@ public class GraphComponent extends JPanel {
                     Node to = conn_to.getTo();
                     
                     String weight;
-                    if (loop != null)
-                        weight = conn_from.getWeight() + 
-                                 "(" + loop.getWeight() + ")*" + 
-                                 conn_to.getWeight();
-                    else
-                        weight = conn_from.getWeight() + 
-                                 conn_to.getWeight();
+                    if (loop != null) {
+                        String from_weight = conn_from.getWeight();
+                        String to_weight = conn_to.getWeight();
+                        String loop_weight = loop.getWeight();
+                        
+                        // Есть ли '|' внутри строки
+                        String f_weight = uniteBrackets(from_weight);
+                        String t_weight = uniteBrackets(to_weight);
+                        for (int k = 0; k < f_weight.length(); k++) {
+                            char ch = f_weight.charAt(k);
+                            if (ch == '|') {
+                                from_weight = "(" + from_weight + ")";
+                                break;
+                            }
+                        }
+                        for (int k = 0; k < t_weight.length(); k++) {
+                            char ch = t_weight.charAt(k);
+                            if (ch == '|') {
+                                to_weight = "(" + to_weight + ")";
+                                break;
+                            }
+                        }
+                        // Нужно ли окружать петлю скобками
+                        if (loop_weight.charAt(0) == '(' && loop_weight.charAt(loop_weight.length()-1) == ')')
+                            loop_weight += '*';
+                        else loop_weight = "(" + loop_weight + ")*";
+                        
+                        weight = from_weight + loop_weight + to_weight;
+                    }
+                    else {
+                        String from_weight = conn_from.getWeight();
+                        String to_weight = conn_to.getWeight();
+                        
+                        // Есть ли '|' внутри строки
+                        String f_weight = uniteBrackets(from_weight);
+                        String t_weight = uniteBrackets(to_weight);
+                        for (int k = 0; k < f_weight.length(); k++) {
+                            char ch = f_weight.charAt(k);
+                            if (ch == '|') {
+                                from_weight = "(" + from_weight + ")";
+                                break;
+                            }
+                        }
+                        for (int k = 0; k < t_weight.length(); k++) {
+                            char ch = t_weight.charAt(k);
+                            if (ch == '|') {
+                                to_weight = "(" + to_weight + ")";
+                                break;
+                            }
+                        }
+                        weight = from_weight + to_weight;
+                    }
+                        
                     
                     Connection conn = new Connection(from, to, weight);
                     conns_copy.add(conn);
@@ -466,7 +513,8 @@ public class GraphComponent extends JPanel {
             
         } // Конец while
         
-        // После всех манипуляций должно остаться 2 узла (вход и выход) и 1 или 2 соединения
+        // После всех манипуляций должно остаться 2 узла (вход и выход) и 1 или 2 соединения.
+        // Формирование строки регулярного выражения
         String regular;
         Connection conn_0 = conns_copy.get(0);
         Connection conn_1 = null;
@@ -474,19 +522,86 @@ public class GraphComponent extends JPanel {
             conn_1 = conns_copy.get(1);
         
         if (conn_1 == null) {
-            if (conn_0.getFrom() == conn_0.getTo())
-                regular = "(" + conn_0.getWeight() + ")*";
+            String weight_0 = conn_0.getWeight();
+            if (conn_0.getFrom() == conn_0.getTo()) {
+                if (weight_0.charAt(0) == '(' && weight_0.charAt(weight_0.length()-1) == ')')
+                    regular = weight_0 + "*";
+                else
+                    regular = "(" + weight_0 + ")*";
+            }
             else
-                regular = conn_0.getWeight();
+                regular = weight_0;
         }
         else {
-            if (conn_0.getFrom() == conn_0.getTo())
-                regular = "(" + conn_0.getWeight() + ")*" + conn_1.getWeight();
-            else
-                regular = "(" + conn_1.getWeight() + ")*" + conn_0.getWeight();
+            String weight_0 = conn_0.getWeight();
+            String weight_1 = conn_1.getWeight();
+            if (conn_0.getFrom() == conn_0.getTo()) {
+                if (weight_0.charAt(0) == '(' && weight_0.charAt(weight_0.length()-1) == ')')
+                    regular = weight_0 + "*" + weight_1;
+                else
+                    regular = "(" + weight_0 + ")*" + weight_1;
+            }
+            else {
+                if (weight_1.charAt(0) == '(' && weight_1.charAt(weight_1.length()-1) == ')')
+                    regular = weight_1 + "*" + weight_0;
+                else
+                    regular = "(" + weight_1 + ")*" + weight_0;
+            }
         }
         
+        // Пустые строки "()" могут быть только после "|"
+        String out = "";
+        for (int i = 0; i < regular.length(); i++) {
+            char ch = regular.charAt(i);
+            if (i != 0) {
+                if (ch == '(' && regular.charAt(i+1) == ')' && regular.charAt(i-1) != '|') i++;
+                else out += ch;
+            }
+            else {
+                if (regular.charAt(i+1) == ')') i++;
+                else out += ch;
+            }
+        }        
+        regular = out;
+        
         return regular;
+    }
+    
+    // Возвращает строку, в которой внешние скобки объединены в один символ
+    private String uniteBrackets(String str) {
+        String out = "";
+        Stack<Character> brackets = new Stack<>();
+        boolean in_brackets = false;
+        
+        for (int i = 0; i < str.length(); i++) {
+            char ch = str.charAt(i);
+            if (!in_brackets) { // Если не внутри скобок
+                out += ch;
+                if (ch == '(') {
+                    brackets.push(ch);
+                    in_brackets = true;
+                }
+            }
+            else { // Если внутри скобок
+                switch (ch) {
+                    case '(':
+                        brackets.push(ch);
+                        break;
+                    case ')':
+                        brackets.pop();
+                        if (brackets.empty()) {
+                            out += ".)";
+                            in_brackets = false;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+        
+        
+        return out;
     }
     
     // Возвращает индекс элемента, внутри которого есть точка (x, y)
@@ -726,6 +841,15 @@ public class GraphComponent extends JPanel {
             g.fillOval(x_top_left, y_top_left, node_diam, node_diam);
             g.setColor(Color.BLACK);
             g.drawOval(x_top_left, y_top_left, node_diam, node_diam);
+            
+            // Отрисовка имени
+            if (show_name) {
+                int name_x = x + node_diam / 2 + 5;
+                int name_height = font_metrics.getAscent();
+                int name_y = y + name_height / 2;
+                g.drawString(node.getName(), name_x, name_y);
+            }
+            
             // Отрисовка выходов
             if (node.exit)
                 drawArrow(g, 
@@ -739,7 +863,6 @@ public class GraphComponent extends JPanel {
             int x = node.getX();
             int y = node.getY();
             
-            g.setColor(node.getColor());
             drawArrow(g, 
                     x-node_diam*2 + offset_x, y + offset_y, 
                     x-node_diam/2 + offset_x, y + offset_y);

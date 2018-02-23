@@ -773,31 +773,32 @@ public class GraphComponent extends JPanel {
         
     }
     
+    // Рисует петлю
     private void drawLoop(Graphics g, int x, int y, String weight) {
         
-        int upper_left_x = x + node_diam / 2;
-        int upper_left_y = y - node_diam;
-        int width = node_diam * 4;
-        int height = node_diam * 2;
+        int upper_left_x = x - node_diam;
+        int upper_left_y = y + node_diam / 2;
+        int width = node_diam * 2;
+        int height = node_diam * 4;
         
         // Центр эллипса, на котором лежит дуга
         int mid_x = upper_left_x + width/2;
         int mid_y = upper_left_y + height/2;
         
         // Точка начала крыльев стрелки
-        int arrow_x = (int) (mid_x + cos(-PI*5/6) * width/2);
-        int arrow_y = (int) (mid_y - sin(-PI*5/6) * height/2);
+        int arrow_x = (int) (mid_x + cos(PI*3/4) * width/2);
+        int arrow_y = (int) (mid_y - sin(PI*3/4) * height/2);
         
         // Дуга
-        g.drawArc(upper_left_x, upper_left_y, width, height, -150, 300);
+        g.drawArc(upper_left_x, upper_left_y, width, height, 135, 270);
         // "Крылья" стрелки
-        g.drawLine(arrow_x, arrow_y, arrow_x + 7, arrow_y);
-        g.drawLine(arrow_x, arrow_y, (int) (arrow_x + cos(-PI/3)*7), (int) (arrow_y - sin(-PI/3)*7));
+        g.drawLine(arrow_x, arrow_y, arrow_x - (int)(cos(2*PI/3)*7), arrow_y + (int)(sin(2*PI/3)*7));
+        g.drawLine(arrow_x, arrow_y, arrow_x - (int)(sin(2*PI/3)*7), arrow_y - (int)(cos(2*PI/3)*7));
         
-        int x1 = upper_left_x + width;
-        int y1 = upper_left_y;
-        int x2 = x1;
-        int y2 = y1 + height;
+        int x1 = upper_left_x;
+        int y1 = upper_left_y + height;
+        int x2 = x1 + width;
+        int y2 = y1;
         // Надпись
         drawConnLetter(weight, g, x1, y1, x2, y2);
     }
@@ -921,9 +922,9 @@ public class GraphComponent extends JPanel {
             
             // Отрисовка имени
             if (show_name) {
-                int name_x = x + node_diam / 2 + 5;
+                int name_x = x + node_diam / 2 + 5 + offset_x;
                 int name_height = font_metrics.getAscent();
-                int name_y = y + name_height / 2;
+                int name_y = y + name_height / 2 + offset_y;
                 g.drawString(node.getName(), name_x, name_y);
             }
             

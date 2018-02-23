@@ -42,6 +42,8 @@ public class Automat extends JFrame {
     private byte mode;
     
     public Automat() {
+        
+        setTitle("Конечный автомат v0.98");
         Automat this_frame = this;
         mode = 0;        
         

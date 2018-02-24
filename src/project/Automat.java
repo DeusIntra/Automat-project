@@ -4,7 +4,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.Stack;
 import javax.swing.*;
-import javax.swing.event.MouseInputAdapter;
+import javax.swing.event.*;
 
 
 public class Automat extends JFrame {
@@ -15,16 +15,18 @@ public class Automat extends JFrame {
     ViewSettingsDialog view_settings_dialog;
     private final GRMenu menu;
     private final GraphComponent graph;
-    private final JPanel colorChoose;
+    private final JPanel color_choose;
     private final JLabel outputLabel;
-    private final JLabel colorLabel;
-    private final JTextField letterSetter;
-    private final JButton getRegularBtn;
-    private final JTextField getRegularTF;
+    private final JLabel color_label;
+//    private final JLabel scale_label;
+    private final JTextField letter_setter;
+    private final JButton get_regular_btn;
+    private final JTextField get_regular_TF;
     private final JMenuItem copy;
     private final JMenuItem copy_selected;
-    private final JPopupMenu popupMenu;
-    private final JFontChooser fontChooser;
+    private final JPopupMenu popup_menu;
+    private final JFontChooser font_chooser;
+//    private final JSlider scale_slider;
     
     /*
     0 - Ничего
@@ -52,20 +54,20 @@ public class Automat extends JFrame {
         copy.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                getRegularTF.selectAll();
-                getRegularTF.copy();
+                get_regular_TF.selectAll();
+                get_regular_TF.copy();
             }
         });
         copy_selected = new JMenuItem("Копировать выделенное");
         copy_selected.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                getRegularTF.copy();
+                get_regular_TF.copy();
             }
         });
-        popupMenu = new JPopupMenu();
-        popupMenu.add(copy);
-        popupMenu.add(copy_selected);
+        popup_menu = new JPopupMenu();
+        popup_menu.add(copy);
+        popup_menu.add(copy_selected);
         
         // Настройка окна программы
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -83,29 +85,29 @@ public class Automat extends JFrame {
                 if (contentPaneWidth - 160 > 300) {
                     if (contentPaneHeight - 120 > 300) {
                         graph.setSize(contentPaneWidth - 160, contentPaneHeight - 120);
-                        getRegularBtn.setLocation(20, contentPaneHeight - 40);
-                        getRegularTF.setBounds(140, contentPaneHeight - 40, contentPaneWidth - 160, 20);
+                        get_regular_btn.setLocation(20, contentPaneHeight - 40);
+                        get_regular_TF.setBounds(140, contentPaneHeight - 40, contentPaneWidth - 160, 20);
                         outputLabel.setLocation(20, contentPaneHeight - 80);
 
                     }
                     else {
                         graph.setSize(contentPaneWidth - 160, 300);
-                        getRegularTF.setSize(contentPaneWidth - 160, 20);
-                        getRegularBtn.setLocation(20, 380);
+                        get_regular_TF.setSize(contentPaneWidth - 160, 20);
+                        get_regular_btn.setLocation(20, 380);
                         outputLabel.setLocation(20, 340);
                     }
                 }
                 else {
                     if (contentPaneHeight - 120 > 300) {
                         graph.setSize(graph.getWidth(), contentPaneHeight - 120);
-                        getRegularBtn.setLocation(20, contentPaneHeight - 40);
-                        getRegularTF.setLocation(140, contentPaneHeight - 40);
+                        get_regular_btn.setLocation(20, contentPaneHeight - 40);
+                        get_regular_TF.setLocation(140, contentPaneHeight - 40);
                         outputLabel.setLocation(20, contentPaneHeight - 80);
                     }
                     else {
                         graph.setSize(300, 300);
-                        getRegularBtn.setLocation(20, 380);
-                        getRegularTF.setBounds(140, 380, 300, 20);
+                        get_regular_btn.setLocation(20, 380);
+                        get_regular_TF.setBounds(140, 380, 300, 20);
                         outputLabel.setLocation(20, 340);
                     }
                 }
@@ -113,7 +115,7 @@ public class Automat extends JFrame {
         });
         
         // Диалоговое окно выбора шрифта, любезно предоставленное Masahiko SAWAI
-        fontChooser = new JFontChooser();
+        font_chooser = new JFontChooser();
         
         // Диалоговое окно настроек вида
         view_settings_dialog = new ViewSettingsDialog(this, "Настройки отображения");
@@ -123,9 +125,9 @@ public class Automat extends JFrame {
         menu.choose_font.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                int result = fontChooser.showDialog(this_frame);
+                int result = font_chooser.showDialog(this_frame);
                 if (result == JFontChooser.OK_OPTION) {
-                    Font font = fontChooser.getSelectedFont();
+                    Font font = font_chooser.getSelectedFont();
                     graph.setLetterFont(font);
                     graph.repaint();
                     view_settings_dialog.setGraphFont(font);
@@ -150,29 +152,29 @@ public class Automat extends JFrame {
         add(bp);
         
         // Строка перехода
-        letterSetter = new JTextField();
-        letterSetter.setBounds(20, 20 + bp.height() + 20, 100, 20);
-        letterSetter.setText("a");
-        add(letterSetter);
+        letter_setter = new JTextField();
+        letter_setter.setBounds(20, 20 + bp.height() + 20, 100, 20);
+        letter_setter.setText("a");
+        add(letter_setter);
         
         // Надпись выбора цвета
-        colorLabel = new JLabel("Выбрать цвет:");
-        colorLabel.setBounds(20, 80 + bp.height(), 100, 20);
-        add(colorLabel);
+        color_label = new JLabel("Выбрать цвет:");
+        color_label.setBounds(20, 70 + bp.height(), 100, 20);
+        add(color_label);
         
         // Выбор цвета
-        colorChoose = new JPanel();
-        colorChoose.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-        colorChoose.setBounds(20, 100 + bp.height(), 30, 30);
-        colorChoose.setBackground(Color.RED);
-        colorChoose.addMouseListener(new MouseAdapter(){
+        color_choose = new JPanel();
+        color_choose.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        color_choose.setBounds(20, 90 + bp.height(), 30, 30);
+        color_choose.setBackground(Color.RED);
+        color_choose.addMouseListener(new MouseAdapter(){
             @Override
             public void mouseClicked(MouseEvent e) {
-                Color color = JColorChooser.showDialog(this_frame, "Выбор цвета", colorChoose.getBackground());
-                colorChoose.setBackground(color);
+                Color color = JColorChooser.showDialog(this_frame, "Выбор цвета", color_choose.getBackground());
+                color_choose.setBackground(color);
             }
         });
-        add(colorChoose);     
+        add(color_choose);     
         
         // Настройка панели
         graph = new GraphComponent();
@@ -183,13 +185,13 @@ public class Automat extends JFrame {
         add(graph);
         
         // Кнопка получения регулярного выражения
-        getRegularBtn = new JButton("Получить");
-        getRegularBtn.setBounds(20, contentPaneHeight - 40, 100, 20);
-        getRegularBtn.addActionListener(new ActionListener() {
+        get_regular_btn = new JButton("Получить");
+        get_regular_btn.setBounds(20, contentPaneHeight - 40, 100, 20);
+        get_regular_btn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    getRegularTF.setText(graph.getRegular());
+                    get_regular_TF.setText(graph.getRegular());
                     outputLabel.setText("Регулярное выражение получено");
                 }
                 catch (RuntimeException ex) {
@@ -197,25 +199,34 @@ public class Automat extends JFrame {
                 }
             }
         });
-        add(getRegularBtn);
+        add(get_regular_btn);
         
         // Поле вывода регулярного выражения
-        getRegularTF = new JTextField();
-        getRegularTF.setEditable(false);
-        getRegularTF.setBackground(Color.WHITE);
-        getRegularTF.setBounds(140, contentPaneHeight - 40, contentPaneWidth - 160, 20);
-        getRegularTF.addMouseListener(new MouseAdapter() {
+        get_regular_TF = new JTextField();
+        get_regular_TF.setEditable(false);
+        get_regular_TF.setBackground(Color.WHITE);
+        get_regular_TF.setBounds(140, contentPaneHeight - 40, contentPaneWidth - 160, 20);
+        get_regular_TF.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getButton() != 3) return;                
-                popupMenu.show(this_frame, e.getX()+145, e.getY()+555);
+                popup_menu.show(this_frame, e.getX()+145, e.getY()+555);
             }
         });
-        add(getRegularTF);
+        add(get_regular_TF);
         
         outputLabel = new JLabel();
         outputLabel.setBounds(20, contentPaneHeight - 80, contentPaneWidth - 40, 20);
         add(outputLabel);
+        
+//        scale_label = new JLabel("Масштаб: 100%");
+//        scale_label.setBounds(20, 130 + bp.height(), 100, 20);
+//        add(scale_label);
+//        
+//        scale_slider = new JSlider(25, 400, 100);
+//        scale_slider.setBounds(15, 150 + bp.height(), 100, 20);
+//        scale_slider.addChangeListener(new ScaleListener());
+//        add(scale_slider);
 
     }
 
@@ -231,6 +242,17 @@ public class Automat extends JFrame {
         graph.setNetColor(net_color);
         graph.repaint();
     }
+
+//    private class ScaleListener implements ChangeListener {
+//
+//        @Override
+//        public void stateChanged(ChangeEvent e) {
+//            int scale = scale_slider.getValue();
+//            scale_label.setText("Масштаб: " + scale + "%");
+//            graph.setScale(scale / 100.0);
+//            graph.repaint();
+//        }
+//    }
     
     private class VisMouseListener extends MouseInputAdapter {
         
@@ -300,9 +322,9 @@ public class Automat extends JFrame {
                         updateNode(e);
                         break;
                     case 4: // Добавление перехода
-                        String str = letterSetter.getText();
+                        String str = letter_setter.getText();
                         str = checkInput(str);
-                        letterSetter.setText(str);
+                        letter_setter.setText(str);
                         addArrow(e);
                         break;
                     case 6: // Удаление соединения
@@ -395,7 +417,7 @@ public class Automat extends JFrame {
         private void addArrow (MouseEvent e) {
             int x = e.getX();
             int y = e.getY();
-            graph.setLetter(letterSetter.getText());
+            graph.setLetter(letter_setter.getText());
             graph.addArrow(x, y);
             graph.repaint();
         }
@@ -417,7 +439,7 @@ public class Automat extends JFrame {
         private void addLoop(MouseEvent e) {
             int x = e.getX();
             int y = e.getY();
-            graph.setLetter(letterSetter.getText());
+            graph.setLetter(letter_setter.getText());
             graph.addLoop(x, y);
             graph.repaint();
         }
@@ -479,7 +501,7 @@ public class Automat extends JFrame {
         private void setNodeColor(MouseEvent e) {
             int x = e.getX();
             int y = e.getY();
-            Color color = colorChoose.getBackground();
+            Color color = color_choose.getBackground();
             graph.setNodeColor(color, x, y);
             graph.repaint();
         }
@@ -487,7 +509,7 @@ public class Automat extends JFrame {
         private void setConnColor(MouseEvent e) {
             int x = e.getX();
             int y = e.getY();
-            Color color = colorChoose.getBackground();
+            Color color = color_choose.getBackground();
             graph.setConnColor(color, x, y);
             graph.repaint();
         }

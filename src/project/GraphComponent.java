@@ -26,6 +26,7 @@ public class GraphComponent extends JPanel {
     private int current_elem_index;             // Индекс активного элемента
     private int enter_index;                    // Индекс узла, являющегося входом
     private int offset_x, offset_y;             // Отклонение для перемещения вида
+//    private double scale;                       // Масштаб полотна
     private int net_scale;                      // Размер сетки
     private Color net_color;                    // Цвет сетки
     private Font font;                          // Шрифт
@@ -44,6 +45,7 @@ public class GraphComponent extends JPanel {
         enter_index = -1;
         offset_x = 0;
         offset_y = 0;
+//        scale = 1;
         net_scale = 80;
         net_color = new Color(0, 0, 0, (float)0.05);
         font = new Font(Font.SANS_SERIF, Font.PLAIN, 14);
@@ -126,10 +128,17 @@ public class GraphComponent extends JPanel {
     
     // Добавляет переход
     public void fixArrow(int x, int y) {
-        if (current_arrow == null) return;
+        if (current_arrow == null) {
+            current_elem_index = -1;
+            return;
+        }
             
         int other_node_index = getElemIndexAt(x, y);
-        if (other_node_index == -1 || other_node_index == current_elem_index) return;
+        if (other_node_index == -1 || other_node_index == current_elem_index) {
+            current_elem_index = -1;
+            current_arrow = null;
+            return;
+        }
         
         // Если кнопка мыши была отпущена на существующем узле
         Node node = nodes.get(current_elem_index);
@@ -875,6 +884,10 @@ public class GraphComponent extends JPanel {
         net_scale = size;
     }
     
+//    public void setScale(double s) {
+//        scale = s;
+//    }
+    
     @Override
     public void paintComponent(Graphics g) {
         
@@ -882,15 +895,15 @@ public class GraphComponent extends JPanel {
         g.setFont(font);
         font_metrics = g.getFontMetrics(font);
         
+        int this_width = this.getBounds().width;
+        int this_height = this.getBounds().height;
+            
         super.paintComponent(g); // Рисует панель
         
         // Отрисовка сетки
         if (show_net) {
             int net_offset_x = offset_x % net_scale;
             int net_offset_y = offset_y % net_scale;
-            
-            int this_width = this.getBounds().width;
-            int this_height = this.getBounds().height;
             
             g.setColor(net_color);
             for (int x = net_offset_x; x < this_width; x += net_scale)
